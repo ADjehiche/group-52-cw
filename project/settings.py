@@ -84,16 +84,29 @@ WSGI_APPLICATION = 'project.wsgi.application'
 # https://docs.djangoproject.com/en/stable/ref/settings/#databases
 
 
-DATABASES = {
-    "default": {
-    "ENGINE": "django.db.backends.postgresql",
-    "NAME": os.environ["POSTGRESQL_DATABASE"],
-    "USER": os.environ["POSTGRESQL_USER"],
-    "PASSWORD": os.environ["POSTGRESQL_PASSWORD"],
-    "HOST": os.environ.get("DATABASE_SERVICE_NAME", "postgresql"),
-    "PORT": "5432",
-}
-}
+# Determine whether PostgreSQL env vars exist; otherwise default to SQLite for local dev.
+if (
+    os.environ.get("POSTGRESQL_DATABASE")
+    and os.environ.get("POSTGRESQL_USER")
+    and os.environ.get("POSTGRESQL_PASSWORD")
+):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("POSTGRESQL_DATABASE"),
+            "USER": os.environ.get("POSTGRESQL_USER"),
+            "PASSWORD": os.environ.get("POSTGRESQL_PASSWORD"),
+            "HOST": os.environ.get("DATABASE_SERVICE_NAME", "postgresql"),
+            "PORT": os.environ.get("POSTGRESQL_SERVICE_PORT", "5432"),
+        }
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # Password validation
