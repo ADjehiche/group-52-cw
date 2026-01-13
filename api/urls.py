@@ -17,9 +17,10 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 from django.http import HttpResponse
-
+from . import views
 from .views import main_spa
 
 urlpatterns = [
-    path('', main_spa),
+    path("api/items/", views.items_collection, name="items_collection"),
+    path("", views.main_spa, name="main_spa"),
 ]
