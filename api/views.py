@@ -8,12 +8,13 @@ from django.core.exceptions import ValidationError
 from django.http import HttpRequest, JsonResponse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from django.views.decorators.csrf import csrf_exempt
 
 
 from .models import Item
 
 
-
+@csrf_exempt # TEMP (local dev): remove once Vue CSRF header is implemented
 def items_collection(request: HttpRequest) -> JsonResponse:
     """
     POST /api/items/
