@@ -20,6 +20,26 @@ def items_collection(request: HttpRequest) -> JsonResponse:
     POST /api/items/
     Create a new auction item for the authenticated user.
     """
+    if request.method == "GET":
+        items = Item.objects.all().order_by("-id")
+        return JsonResponse(
+            {
+                "items": [
+                    {
+                        "id": item.id,
+                        "title": item.title,
+                        "description": item.description,
+                        "starting_price": str(item.starting_price),
+                        "image_url": item.image_url,
+                        "ends_at": item.ends_at.isoformat(),
+                        "owner_id": item.owner_id,
+                    }
+                    for item in items
+                ]
+            },
+            status=200,
+        )
+
     if request.method != "POST":
         return JsonResponse({"detail": "Method not allowed."}, status=405)
 
