@@ -6,6 +6,8 @@ from typing import Any
 
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, JsonResponse
+from django.http import HttpResponse
+from django.shortcuts import render
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import csrf_exempt
@@ -130,3 +132,10 @@ def items_collection(request: HttpRequest) -> JsonResponse:
         },
         status=201,
     )
+
+def main_spa(request: HttpRequest) -> HttpResponse:
+    """
+    Serve the built Vue SPA (production build).
+    """
+    return render(request, "api/spa/index.html")
+
