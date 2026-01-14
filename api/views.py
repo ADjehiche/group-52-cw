@@ -4,16 +4,16 @@ import json
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
+from django.contrib.auth import login, logout
+from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, JsonResponse
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
-from django.contrib.auth import login
-from django.contrib.auth.forms import UserCreationForm
-from django.shortcuts import redirect
+from django.views.decorators.http import require_POST
 
 
 
@@ -162,4 +162,11 @@ def main_spa(request: HttpRequest) -> HttpResponse:
     Serve the built Vue SPA (production build).
     """
     return render(request, "api/spa/index.html")
+
+
+@require_POST
+def api_logout(request: HttpRequest) -> JsonResponse:
+    """Log out the user and respond with a simple JSON body."""
+    logout(request)
+    return JsonResponse({"ok": True})
 
