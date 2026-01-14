@@ -14,10 +14,18 @@
             >
                 Other Page
             </router-link>
+            |
+            <router-link
+                class=""
+                :to="{name: 'New Item'}"
+            >
+                New Item
+            </router-link>
         </div>
         <RouterView class="flex-shrink-0" />
     </main>
 </template>
+
 
 <script lang="ts">
 import { defineComponent } from "vue";
