@@ -20,9 +20,21 @@ export default defineConfig(({ mode }) => ({
     },
     server: {
         proxy: {
-            "/api": "http://localhost:8000",
-            "/admin": "http://localhost:8000",
-            "/accounts": "http://localhost:8000",
+            "/api": {
+                target: "http://localhost:8000",
+                changeOrigin: true,
+                cookieDomainRewrite: "localhost",
+            },
+            "/admin": {
+                target: "http://localhost:8000",
+                changeOrigin: true,
+                cookieDomainRewrite: "localhost",
+            },
+            "/accounts": {
+                target: "http://localhost:8000",
+                changeOrigin: true,
+                cookieDomainRewrite: "localhost",
+            },
         },
     },
 }));

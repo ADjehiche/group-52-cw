@@ -10,7 +10,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
 from django.shortcuts import redirect
@@ -40,7 +40,6 @@ def signup(request: HttpRequest) -> HttpResponse:
 
 
 
-@csrf_exempt # TEMP (local dev): remove once Vue CSRF header is implemented
 def items_collection(request: HttpRequest) -> JsonResponse:
     """
     POST /api/items/
@@ -157,6 +156,7 @@ def items_collection(request: HttpRequest) -> JsonResponse:
         status=201,
     )
 
+@ensure_csrf_cookie
 def main_spa(request: HttpRequest) -> HttpResponse:
     """
     Serve the built Vue SPA (production build).
