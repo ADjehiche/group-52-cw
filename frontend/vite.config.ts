@@ -12,6 +12,15 @@ export default defineConfig(({ mode }) => ({
         emptyOutDir: true,
         outDir: "../api/static/api/spa",
     },
+    server: {
+        proxy: {
+            "/api": {
+                target: "http://localhost:8000",
+                changeOrigin: true,
+            },
+            "/items": "http://localhost:8000",
+        },
+    },
     plugins: [vue()],
     resolve: {
         alias: {
