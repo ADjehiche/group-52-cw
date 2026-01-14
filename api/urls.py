@@ -23,5 +23,6 @@ from .views import main_spa
 urlpatterns = [
     path("api/items/", views.items_collection, name="items_collection"),
     path("api/logout/", views.api_logout, name="api_logout"),
+    path("api/auth/status/", views.auth_status, name="auth_status"),
     path("", views.main_spa, name="main_spa"),
 ]

@@ -170,3 +170,19 @@ def api_logout(request: HttpRequest) -> JsonResponse:
     logout(request)
     return JsonResponse({"ok": True})
 
+
+def auth_status(request: HttpRequest) -> JsonResponse:
+    """Return whether the current session is authenticated."""
+    if request.user.is_authenticated:
+        return JsonResponse(
+            {
+                "authenticated": True,
+                "user": {
+                    "id": request.user.pk,
+                    "username": request.user.username,
+                    "is_staff": request.user.is_staff,
+                },
+            }
+        )
+    return JsonResponse({"authenticated": False, "user": None})
+
