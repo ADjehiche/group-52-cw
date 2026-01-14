@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable
 
-from django.db.models import Q
+from django.db.models import Case, IntegerField, Q, When
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -38,9 +38,23 @@ def items_collection(request: HttpRequest) -> JsonResponse:
 
     items_qs = Item.objects.filter(ends_at__gt=timezone.now())
     if query:
-        items_qs = items_qs.filter(Q(title__icontains=query) | Q(description__icontains=query))
+        items_qs = items_qs.annotate(
+            title_match=Case(
+                When(title__icontains=query, then=1),
+                default=0,
+                output_field=IntegerField(),
+            ),
+            desc_match=Case(
+                When(description__icontains=query, then=1),
+                default=0,
+                output_field=IntegerField(),
+            ),
+        ).filter(Q(title_match=1) | Q(desc_match=1))
+        items_qs = items_qs.order_by("-title_match", "-desc_match", "-id")
+    else:
+        items_qs = items_qs.order_by("-id")
 
-    items = items_qs.order_by("-id")
+    items = items_qs
     return JsonResponse({"items": _serialize_items(items)}, status=200)
 
 
