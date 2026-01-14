@@ -11,9 +11,33 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import login
+from django.contrib.auth.forms import UserCreationForm
+from django.shortcuts import redirect
+
 
 
 from .models import Item
+
+
+@csrf_exempt # TEMP (local dev): remove once Vue CSRF header is implemented
+def signup(request: HttpRequest) -> HttpResponse:
+    """
+    GET: show signup form
+    POST: create user and log them in
+    """
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect("/")
+    else:
+        form = UserCreationForm()
+
+    return render(request, "registration/signup.html", {"form": form})
+
+
 
 
 @csrf_exempt # TEMP (local dev): remove once Vue CSRF header is implemented

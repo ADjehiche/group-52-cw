@@ -22,6 +22,7 @@ export default defineConfig(({ mode }) => ({
         proxy: {
             "/api": "http://localhost:8000",
             "/admin": "http://localhost:8000",
+            "/accounts": "http://localhost:8000",
         },
     },
 }));
