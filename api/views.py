@@ -4,8 +4,9 @@ from typing import Iterable
 
 from django.db.models import Case, IntegerField, Q, When
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
+from django.views.decorators.http import require_GET
 
 from .models import Bid, Item
 
@@ -70,14 +71,12 @@ def items_collection(request: HttpRequest) -> JsonResponse:
     return JsonResponse({"items": _serialize_items(items)}, status=200)
 
 
+@require_GET
 def item_detail(request: HttpRequest, item_id: int) -> JsonResponse:
     """Return a single active item with highest bid and time remaining."""
-    if request.method != "GET":
-        return JsonResponse({"detail": "Method not allowed."}, status=405)
+    now = timezone.now()
 
-    item = Item.objects.filter(pk=item_id, ends_at__gt=timezone.now()).first()
-    if not item:
-        return JsonResponse({"detail": "Not found."}, status=404)
+    item = get_object_or_404(Item.objects.filter(pk=item_id, ends_at__gt=now))
 
     top_bid = (
         Bid.objects.filter(item=item)
@@ -85,9 +84,7 @@ def item_detail(request: HttpRequest, item_id: int) -> JsonResponse:
         .first()
     )
 
-    time_remaining_seconds = max(
-        0, int((item.ends_at - timezone.now()).total_seconds())
-    )
+    time_remaining_seconds = max(0, int((item.ends_at - now).total_seconds()))
 
     return JsonResponse(
         {
