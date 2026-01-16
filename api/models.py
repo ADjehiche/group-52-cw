@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
-
+from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
