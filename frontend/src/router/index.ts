@@ -18,14 +18,14 @@ let base = (import.meta.env.MODE == 'development') ? import.meta.env.BASE_URL : 
 const router = createRouter({
     history: createWebHistory(base),
     routes: [
-        { path: '/', name: 'Main Page', component: MainPage, meta: { requiresAuth: true } },
-        { path: '/other/', name: 'Other Page', component: OtherPage, meta: { requiresAuth: true } },
+        { path: '/', name: 'Main Page', component: MainPage, meta: { requiresAuth: false } },
+        { path: '/other/', name: 'Other Page', component: OtherPage, meta: { requiresAuth: false } },
         { path: "/items/new/", name: "New Item", component: NewItemPage, meta: { requiresAuth: true } },
     ]
 })
 
 router.beforeEach(async (to, _from, next) => {
-    const requiresAuth = to.meta.requiresAuth !== false;
+    const requiresAuth = to.meta.requiresAuth === true;
     if (!requiresAuth) {
         return next();
     }
