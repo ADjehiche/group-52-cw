@@ -22,7 +22,7 @@
         </dd>
 
         <dt class="col-sm-4">Time remaining</dt>
-        <dd class="col-sm-8">{{ formatTimeRemaining(item.time_remaining_seconds) }}</dd>
+        <dd class="col-sm-8">{{ formatTimeRemaining(remainingSeconds) }}</dd>
 
         <dt class="col-sm-4">Ends at</dt>
         <dd class="col-sm-8">{{ formatDate(item.ends_at) }}</dd>
@@ -52,12 +52,41 @@ export default defineComponent({
       item: null as ItemDetail | null,
       loading: true,
       error: "",
+      remainingSeconds: 0,
+      tickHandle: null as number | null,
     };
   },
   async created() {
     await this.load();
   },
+  watch: {
+    "$route.params.id": {
+      immediate: false,
+      async handler() {
+        await this.load();
+      },
+    },
+  },
+  beforeUnmount() {
+    this.stopTick();
+  },
   methods: {
+    stopTick() {
+      if (this.tickHandle) {
+        clearInterval(this.tickHandle);
+        this.tickHandle = null;
+      }
+    },
+    startTick() {
+      this.stopTick();
+      this.tickHandle = window.setInterval(() => {
+        if (this.remainingSeconds > 0) {
+          this.remainingSeconds -= 1;
+        } else {
+          this.stopTick();
+        }
+      }, 1000);
+    },
     async load() {
       this.loading = true;
       this.error = "";
@@ -69,6 +98,8 @@ export default defineComponent({
       }
       try {
         this.item = await fetchItemDetail(id);
+        this.remainingSeconds = this.item.time_remaining_seconds;
+        this.startTick();
       } catch (err: unknown) {
         this.error = err instanceof Error ? err.message : "Failed to load item.";
       } finally {
@@ -81,14 +112,19 @@ export default defineComponent({
       return date.toLocaleString();
     },
     formatTimeRemaining(seconds: number) {
-      if (seconds <= 0) return "Ended";
-      const hrs = Math.floor(seconds / 3600);
-      const mins = Math.floor((seconds % 3600) / 60);
-      const secs = seconds % 60;
+      const clamped = Math.max(0, Math.floor(seconds));
+      if (clamped <= 0) return "Ended";
+      const hrs = Math.floor(clamped / 3600);
+      const mins = Math.floor((clamped % 3600) / 60);
+      const secs = clamped % 60;
       const parts = [] as string[];
       if (hrs) parts.push(`${hrs}h`);
-      if (mins) parts.push(`${mins}m`);
-      if (!hrs && !mins) parts.push(`${secs}s`);
+      if (hrs || mins) {
+        parts.push(`${mins.toString().padStart(hrs ? 2 : 1, "0")}m`);
+        parts.push(`${secs.toString().padStart(2, "0")}s`);
+      } else {
+        parts.push(`${secs}s`);
+      }
       return parts.join(" ") || "<1s";
     },
   },
