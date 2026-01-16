@@ -18,6 +18,16 @@
           type="search"
           placeholder="e.g. camera, phone"
         />
+        <div class="controls">
+          <label class="sort-label" for="sort">Sort by</label>
+          <select id="sort" v-model="sort" @change="onSortChange">
+            <option value="ending-soon">Ending soon (default)</option>
+            <option value="relevance">Relevance (when searching)</option>
+            <option value="newest">Newest</option>
+            <option value="price-asc">Price: low to high</option>
+            <option value="price-desc">Price: high to low</option>
+          </select>
+        </div>
         <button type="button" class="ghost" @click="clearQuery" v-if="query">Clear</button>
       </div>
       <p class="hint">Search happens automatically with a short delay.</p>
@@ -72,6 +82,7 @@ export default defineComponent({
       loading: false,
       error: "",
       debounceHandle: null as number | null,
+      sort: "ending-soon",
     };
   },
   mounted() {
@@ -86,6 +97,9 @@ export default defineComponent({
         this.fetchItems();
       }, 300);
     },
+    onSortChange() {
+      this.fetchItems();
+    },
     clearQuery() {
       this.query = "";
       this.fetchItems();
@@ -93,9 +107,16 @@ export default defineComponent({
     async fetchItems() {
       this.loading = true;
       this.error = "";
-      const params = this.query ? `?q=${encodeURIComponent(this.query)}` : "";
+      const params = new URLSearchParams();
+      if (this.query) {
+        params.append("q", this.query);
+      }
+      if (this.sort) {
+        params.append("sort", this.sort);
+      }
+      const queryString = params.toString();
       try {
-        const response = await fetch(`/api/items/${params}`, {
+        const response = await fetch(`/api/items/${queryString ? `?${queryString}` : ""}` , {
           credentials: "include",
         });
         if (!response.ok) {
@@ -158,8 +179,10 @@ export default defineComponent({
 }
 
 .search-row {
-  display: flex;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.75rem;
+  align-items: end;
 }
 
 .search-row input {
@@ -168,6 +191,25 @@ export default defineComponent({
   border: 1px solid #d1d1d1;
   border-radius: 10px;
   font-size: 1rem;
+}
+
+.controls {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 180px;
+}
+
+.sort-label {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.controls select {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #d1d1d1;
+  border-radius: 10px;
+  background: white;
+  font-size: 0.95rem;
 }
 
 .search-row button.ghost {
@@ -249,12 +291,16 @@ export default defineComponent({
 
 @media (max-width: 640px) {
   .search-row {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
   .search-row button.ghost {
     width: 100%;
     text-align: center;
+  }
+
+  .controls {
+    width: 100%;
   }
 }
 </style>

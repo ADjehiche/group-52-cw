@@ -35,6 +35,14 @@ def items_collection(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"detail": "Method not allowed."}, status=405)
 
     query = (request.GET.get("q") or "").strip()
+    sort_param = (request.GET.get("sort") or "ending-soon").strip()
+
+    sort_map: dict[str, tuple[str, ...]] = {
+        "ending-soon": ("ends_at",),
+        "newest": ("-created_at",),
+        "price-asc": ("starting_price",),
+        "price-desc": ("-starting_price",),
+    }
 
     items_qs = Item.objects.filter(ends_at__gt=timezone.now())
     if query:
@@ -50,9 +58,13 @@ def items_collection(request: HttpRequest) -> JsonResponse:
                 output_field=IntegerField(),
             ),
         ).filter(Q(title_match=1) | Q(desc_match=1))
-        items_qs = items_qs.order_by("-title_match", "-desc_match", "-id")
+
+        if sort_param == "relevance":
+            items_qs = items_qs.order_by("-title_match", "-desc_match", "-id")
+        else:
+            items_qs = items_qs.order_by(*sort_map.get(sort_param, sort_map["ending-soon"]))
     else:
-        items_qs = items_qs.order_by("-id")
+        items_qs = items_qs.order_by(*sort_map.get(sort_param, sort_map["ending-soon"]))
 
     items = items_qs
     return JsonResponse({"items": _serialize_items(items)}, status=200)
