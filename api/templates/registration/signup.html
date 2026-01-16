@@ -1,14 +1,69 @@
-<!doctype html>
-<html>
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign up</title>
+    <link rel="stylesheet" href="{% static 'api/auth.css' %}" />
+  </head>
   <body>
-    <h1>Sign up</h1>
+    <div class="auth-shell">
+      <h1>Create account</h1>
+      <p class="description">Start bidding and listing items today.</p>
 
-    <form method="post">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit">Create account</button>
-    </form>
+      <form method="post">
+        {% csrf_token %}
+        
+        <div>
+          <label for="id_username">Username</label>
+          {{ form.username }}
+          {% if form.username.errors %}
+            {% for error in form.username.errors %}
+              <p class="error-text">{{ error }}</p>
+            {% endfor %}
+          {% else %}
+            <p class="small">Letters, numbers, and @/./+/-/_ only</p>
+          {% endif %}
+        </div>
 
-    <p><a href="{% url 'login' %}">Back to login</a></p>
+        <div>
+          <label for="id_password1">Password</label>
+          {{ form.password1 }}
+          {% if form.password1.errors %}
+            {% for error in form.password1.errors %}
+              <p class="error-text">{{ error }}</p>
+            {% endfor %}
+          {% else %}
+            <p class="small">At least 8 characters</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label for="id_password2">Confirm password</label>
+          {{ form.password2 }}
+          {% if form.password2.errors %}
+            {% for error in form.password2.errors %}
+              <p class="error-text">{{ error }}</p>
+            {% endfor %}
+          {% endif %}
+        </div>
+
+        {% if form.non_field_errors %}
+          <div class="alert">
+            {% for error in form.non_field_errors %}
+              {{ error }}
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <button type="submit">Sign up</button>
+      </form>
+
+      <div class="links">
+        <span>Have an account?</span>
+        <a href="{% url 'login' %}">Sign in</a>
+      </div>
+    </div>
   </body>
 </html>

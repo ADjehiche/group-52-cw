@@ -35,6 +35,11 @@ export default defineConfig(({ mode }) => ({
                 changeOrigin: true,
                 cookieDomainRewrite: "localhost",
             },
+            "/static": {
+                target: "http://localhost:8000",
+                changeOrigin: true,
+                cookieDomainRewrite: "localhost",
+            },
         },
     },
 }));
