@@ -6,6 +6,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 // These can be imported from other files
 import MainPage from '../pages/MainPage.vue';
 import OtherPage from '../pages/OtherPage.vue';
+import NewItemPage from "../pages/NewItemPage.vue";
+import ItemDetailPage from "../pages/ItemDetailPage.vue";
 
 let base = (import.meta.env.MODE == 'development') ? import.meta.env.BASE_URL : ''
 
@@ -17,6 +19,8 @@ const router = createRouter({
     routes: [
         { path: '/', name: 'Main Page', component: MainPage },
         { path: '/other/', name: 'Other Page', component: OtherPage },
+        { path: '/items/new/', name: 'New Item', component: NewItemPage },
+        { path: '/items/:id/', name: 'Item Detail', component: ItemDetailPage },
     ]
 })
 
