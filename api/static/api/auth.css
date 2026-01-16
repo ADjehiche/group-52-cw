@@ -200,13 +200,16 @@ button[type="submit"]:active {
 }
 
 .alert {
-  padding: 12px 16px;
-  border-radius: 10px;
-  background: rgba(239, 68, 68, 0.1);
-  color: #fca5a5;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  margin: 0 0 20px;
+  padding: 12px 14px;
+  width: 100%;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.08);
+  color: #fecdd3;
+  border: 1px solid rgba(239, 68, 68, 0.25);
   font-size: 14px;
-  border-left: 3px solid var(--error);
+  line-height: 1.5;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
 .small {
@@ -223,9 +226,14 @@ button[type="submit"]:active {
   line-height: 1.4;
 }
 
-/* Hide Django's default error styling */
+/* Hide Django's default helptext/bullet hints but keep errorlists */
 .auth-shell .helptext,
 .auth-shell ul.helptext,
+.auth-shell form ul:not(.errorlist) {
+  display: none !important;
+}
+
+/* Still hide default errorlist styles; we style errors manually */
 .auth-shell ul.errorlist {
   display: none;
 }
