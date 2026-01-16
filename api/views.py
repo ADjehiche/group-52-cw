@@ -7,7 +7,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
 
-from .models import Item
+from .models import Bid, Item
 
 
 def _serialize_items(items: Iterable[Item]) -> list[dict[str, object]]:
@@ -68,6 +68,43 @@ def items_collection(request: HttpRequest) -> JsonResponse:
 
     items = items_qs
     return JsonResponse({"items": _serialize_items(items)}, status=200)
+
+
+def item_detail(request: HttpRequest, item_id: int) -> JsonResponse:
+    """Return a single active item with highest bid and time remaining."""
+    if request.method != "GET":
+        return JsonResponse({"detail": "Method not allowed."}, status=405)
+
+    item = Item.objects.filter(pk=item_id, ends_at__gt=timezone.now()).first()
+    if not item:
+        return JsonResponse({"detail": "Not found."}, status=404)
+
+    top_bid = (
+        Bid.objects.filter(item=item)
+        .order_by("-amount", "-created_at", "-id")
+        .first()
+    )
+
+    time_remaining_seconds = max(
+        0, int((item.ends_at - timezone.now()).total_seconds())
+    )
+
+    return JsonResponse(
+        {
+            "id": item.id,
+            "title": item.title,
+            "description": item.description,
+            "starting_price": str(item.starting_price),
+            "image_url": item.image_url,
+            "ends_at": item.ends_at.isoformat(),
+            "owner_id": item.owner_id,
+            "highest_bid": {
+                "amount": str(top_bid.amount) if top_bid else None,
+                "bidder_id": top_bid.bidder_id if top_bid else None,
+            },
+            "time_remaining_seconds": time_remaining_seconds,
+        }
+    )
 
 
 def main_spa(request: HttpRequest) -> HttpResponse:
