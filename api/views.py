@@ -107,6 +107,6 @@ def item_detail(request: HttpRequest, item_id: int) -> JsonResponse:
     )
 
 
-def main_spa(request: HttpRequest) -> HttpResponse:
-    """Serve the built Vue SPA entry point."""
+def main_spa(request: HttpRequest, item_id: int | None = None) -> HttpResponse:
+    """Serve the built Vue SPA entry point (accepts optional item_id for SPA routes)."""
     return render(request, "api/spa/index.html", {})
