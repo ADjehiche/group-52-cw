@@ -43,16 +43,21 @@
     <div v-else>
       <ul class="items" v-if="items.length">
         <li v-for="item in items" :key="item.id" class="item-card">
-          <div class="item-head">
-            <h3 class="item-title">{{ item.title }}</h3>
-            <span class="price">£{{ item.starting_price }}</span>
-          </div>
-          <p class="description">{{ item.description || 'No description provided.' }}</p>
-          <div class="meta">
-            <span>Ends: {{ formatDate(item.ends_at) }}</span>
-            <span class="dot" aria-hidden="true">•</span>
-            <span>ID {{ item.id }}</span>
-          </div>
+          <router-link
+            class="card-link"
+            :to="{ name: 'Item Detail', params: { id: item.id } }"
+          >
+            <div class="item-head">
+              <h3 class="item-title">{{ item.title }}</h3>
+              <span class="price">£{{ item.starting_price }}</span>
+            </div>
+            <p class="description">{{ item.description || 'No description provided.' }}</p>
+            <div class="meta">
+              <span>Ends: {{ formatDate(item.ends_at) }}</span>
+              <span class="dot" aria-hidden="true">•</span>
+              <span>ID {{ item.id }}</span>
+            </div>
+          </router-link>
         </li>
       </ul>
       <p v-else class="empty">No items found.</p>
@@ -249,6 +254,16 @@ export default defineComponent({
   padding: 1rem 1.25rem;
   background: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.card-link {
+  color: inherit;
+  text-decoration: none;
+  display: block;
+}
+
+.card-link:hover .item-title {
+  text-decoration: underline;
 }
 
 .item-head {
