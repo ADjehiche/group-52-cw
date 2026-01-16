@@ -12,7 +12,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
-from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
 
@@ -20,7 +20,6 @@ from django.views.decorators.http import require_POST
 from .models import Item
 
 
-@csrf_exempt # TEMP (local dev): remove once Vue CSRF header is implemented
 def signup(request: HttpRequest) -> HttpResponse:
     """
     GET: show signup form

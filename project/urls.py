@@ -18,8 +18,12 @@ from django.urls import include, path
 from django.http import HttpResponse
 from api import views as api_views
 
+
+def health_check(_request):
+    return HttpResponse("OK")
+
 urlpatterns = [
-    path("health", lambda request: HttpResponse("OK")),
+    path("health", health_check),
     path("admin/", admin.site.urls),
     path("accounts/signup/", api_views.signup, name="signup"),
     path("accounts/", include("django.contrib.auth.urls")),

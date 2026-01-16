@@ -17,14 +17,19 @@ export async function fetchAuthStatus(force = false): Promise<AuthStatus> {
   if (!force && inFlight) return inFlight;
 
   inFlight = (async () => {
-    const resp = await apiFetch("/api/auth/status/");
-    let data: AuthStatus = { authenticated: false, user: null };
-    if (resp.ok) {
-      data = (await resp.json()) as AuthStatus;
+    try {
+      const resp = await apiFetch("/api/auth/status/");
+      let data: AuthStatus = { authenticated: false, user: null };
+      if (resp.ok) {
+        data = (await resp.json()) as AuthStatus;
+      }
+      cachedStatus = data;
+      return data;
+    } catch (err) {
+      throw err;
+    } finally {
+      inFlight = null;
     }
-    cachedStatus = data;
-    inFlight = null;
-    return data;
   })();
 
   return inFlight;

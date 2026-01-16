@@ -38,6 +38,7 @@ router.beforeEach(async (to, _from, next) => {
     // Redirect to Django login with next param so user returns after login
     const nextUrl = encodeURIComponent(to.fullPath);
     window.location.href = `/accounts/login/?next=${nextUrl}`;
+    return next(false);
 });
 
 export default router

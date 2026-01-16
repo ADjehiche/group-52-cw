@@ -112,6 +112,14 @@
     image_url: string;
     };
 
+    type NewItemPayload = {
+    title: string;
+    description: string;
+    starting_price: string;
+    ends_at: string;
+    image_url: string;
+    };
+
     export default defineComponent({
     name: "NewItemPage",
     data() {
@@ -151,7 +159,12 @@
         }
 
         if (!this.form.ends_at) {
-            this.errors.ends_at = "End date/time is required.";
+          this.errors.ends_at = "End date/time is required.";
+        } else {
+          const endsAt = new Date(this.form.ends_at);
+          if (endsAt <= new Date()) {
+          this.errors.ends_at = "End date/time must be in the future.";
+          }
         }
 
         return Object.keys(this.errors).length === 0;
@@ -165,7 +178,7 @@
         this.successMessage = "";
 
         try {
-            const payload = {
+            const payload: NewItemPayload = {
             title: this.form.title.trim(),
             description: this.form.description.trim(),
             starting_price: this.form.starting_price.trim(),

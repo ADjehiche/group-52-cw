@@ -12,51 +12,19 @@
       <h1>Create account</h1>
       <p class="description">Start bidding and listing items today.</p>
 
+      {% if form.errors %}
+      <div class="alert">
+        {% if form.non_field_errors %} {% for error in form.non_field_errors %}
+        <div>{{ error }}</div>
+        {% endfor %} {% endif %} {% for field in form %} {% for error in
+        field.errors %}
+        <div>{{ field.label }}: {{ error }}</div>
+        {% endfor %} {% endfor %}
+      </div>
+      {% endif %}
+
       <form method="post">
-        {% csrf_token %}
-        
-        <div>
-          <label for="id_username">Username</label>
-          {{ form.username }}
-          {% if form.username.errors %}
-            {% for error in form.username.errors %}
-              <p class="error-text">{{ error }}</p>
-            {% endfor %}
-          {% else %}
-            <p class="small">Letters, numbers, and @/./+/-/_ only</p>
-          {% endif %}
-        </div>
-
-        <div>
-          <label for="id_password1">Password</label>
-          {{ form.password1 }}
-          {% if form.password1.errors %}
-            {% for error in form.password1.errors %}
-              <p class="error-text">{{ error }}</p>
-            {% endfor %}
-          {% else %}
-            <p class="small">At least 8 characters</p>
-          {% endif %}
-        </div>
-
-        <div>
-          <label for="id_password2">Confirm password</label>
-          {{ form.password2 }}
-          {% if form.password2.errors %}
-            {% for error in form.password2.errors %}
-              <p class="error-text">{{ error }}</p>
-            {% endfor %}
-          {% endif %}
-        </div>
-
-        {% if form.non_field_errors %}
-          <div class="alert">
-            {% for error in form.non_field_errors %}
-              {{ error }}
-            {% endfor %}
-          </div>
-        {% endif %}
-
+        {% csrf_token %} {{ form.as_p }}
         <button type="submit">Sign up</button>
       </form>
 

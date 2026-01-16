@@ -22,22 +22,22 @@
                 New Item
             </router-link>
             <template v-if="authChecked">
-                |
-                <button
-                    v-if="isAuthed"
-                    class="btn btn-link p-0 align-baseline"
-                    type="button"
-                    @click="logout"
-                    :disabled="loggingOut"
-                >
-                    {{ loggingOut ? "Logging out..." : "Logout" }}
-                </button>
-                <span v-else>
-                    |
+                <span class="mx-1">|</span>
+                <template v-if="isAuthed">
+                    <button
+                        class="btn btn-link p-0 align-baseline"
+                        type="button"
+                        @click="logout"
+                        :disabled="loggingOut"
+                    >
+                        {{ loggingOut ? "Logging out..." : "Logout" }}
+                    </button>
+                </template>
+                <template v-else>
                     <a class="text-decoration-none" href="/accounts/login/">Login</a>
-                    |
+                    <span class="mx-1">|</span>
                     <a class="text-decoration-none" href="/accounts/signup/">Sign up</a>
-                </span>
+                </template>
             </template>
         </div>
         <RouterView class="flex-shrink-0" />
