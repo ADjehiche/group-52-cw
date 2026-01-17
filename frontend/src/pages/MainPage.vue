@@ -75,13 +75,20 @@ type Item = {
 
 export default defineComponent({
   name: "MainPage",
-  data() {
+  data(): {
+    query: string;
+    items: Item[];
+    loading: boolean;
+    error: string;
+    debounceHandle: number | null;
+    sort: string;
+  } {
     return {
       query: "",
-      items: [] as Item[],
+      items: [],
       loading: false,
       error: "",
-      debounceHandle: null as number | null,
+      debounceHandle: null,
       sort: "ending-soon",
     };
   },
@@ -92,16 +99,25 @@ export default defineComponent({
     onQueryInput() {
       if (this.debounceHandle) {
         clearTimeout(this.debounceHandle);
+        this.debounceHandle = null;
       }
       this.debounceHandle = window.setTimeout(() => {
         this.fetchItems();
       }, 300);
     },
     onSortChange() {
+      if (this.debounceHandle) {
+        clearTimeout(this.debounceHandle);
+        this.debounceHandle = null;
+      }
       this.fetchItems();
     },
     clearQuery() {
       this.query = "";
+      if (this.debounceHandle) {
+        clearTimeout(this.debounceHandle);
+        this.debounceHandle = null;
+      }
       this.fetchItems();
     },
     async fetchItems() {
@@ -125,7 +141,8 @@ export default defineComponent({
         const payload = await response.json();
         this.items = payload.items || [];
       } catch (err: unknown) {
-        this.error = err instanceof Error ? err.message : "Failed to load items.";
+        const error = err as Error;
+        this.error = error?.message || "Failed to load items.";
       } finally {
         this.loading = false;
       }

@@ -60,7 +60,7 @@ def items_collection(request: HttpRequest) -> JsonResponse:
         ).filter(Q(title_match=1) | Q(desc_match=1))
 
         if sort_param == "relevance":
-            items_qs = items_qs.order_by("-title_match", "-desc_match", "-id")
+            items_qs = items_qs.order_by("-title_match", "-desc_match", "-created_at")
         else:
             items_qs = items_qs.order_by(*sort_map.get(sort_param, sort_map["ending-soon"]))
     else:

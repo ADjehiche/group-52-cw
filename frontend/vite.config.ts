@@ -18,7 +18,10 @@ export default defineConfig(({ mode }) => ({
                 target: "http://localhost:8000",
                 changeOrigin: true,
             },
-            "/items": "http://localhost:8000",
+            "/items": {
+                target: "http://localhost:8000",
+                changeOrigin: true,
+            },
         },
     },
     plugins: [vue()],
