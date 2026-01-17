@@ -1,6 +1,6 @@
 <template>
     <div class="h3">
-      {{ title }}
+      {{ $t('pages.other.title') }}
     </div>
   </template>
   
@@ -8,11 +8,7 @@
       import { defineComponent } from "vue";
   
       export default defineComponent({
-          data() {
-              return {
-                  title: "Other Page",
-              }
-          }
+          name: 'OtherPage'
       })
   </script>
   

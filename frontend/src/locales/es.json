@@ -1,0 +1,18 @@
+{
+  "nav": {
+    "mainPage": "Página Principal",
+    "otherPage": "Otra Página"
+  },
+  "pages": {
+    "main": {
+      "title": "Página Principal"
+    },
+    "other": {
+      "title": "Otra Página"
+    }
+  },
+  "footer": {
+    "language": "Idioma",
+    "selectLanguage": "Seleccionar Idioma"
+  }
+}

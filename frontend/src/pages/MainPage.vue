@@ -1,6 +1,6 @@
 <template>
   <div class="h1">
-    {{ title }}
+    {{ $t('pages.main.title') }}
   </div>
 </template>
 
@@ -8,11 +8,7 @@
     import { defineComponent } from "vue";
 
     export default defineComponent({
-        data() {
-            return {
-                title: "Main Page",
-            }
-        }
+        name: 'MainPage'
     })
 </script>
 
