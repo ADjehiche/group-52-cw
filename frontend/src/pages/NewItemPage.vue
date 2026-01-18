@@ -313,7 +313,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 .new-item-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   min-height: 100vh;
+  width: 100vw;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -321,8 +327,9 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: linear-gradient(135deg, #1a1f2e 0%, #0f1419 100%);
   color: #ffffff;
-  position: relative;
   overflow-x: hidden;
+  overflow-y: auto;
+  z-index: 9999;
 }
 
 .new-item-page::before {
