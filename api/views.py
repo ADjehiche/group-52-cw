@@ -54,7 +54,7 @@ def items_collection(request: HttpRequest) -> JsonResponse:
                         "title": item.title,
                         "description": item.description,
                         "starting_price": str(item.starting_price),
-                        "image_url": item.image_url,
+                        "image_url": request.build_absolute_uri(item.image.url) if item.image else None,
                         "ends_at": item.ends_at.isoformat(),
                         "owner_id": item.owner_id,
                     }
@@ -70,23 +70,14 @@ def items_collection(request: HttpRequest) -> JsonResponse:
     if not request.user.is_authenticated:
         return JsonResponse({"detail": "Authentication required."}, status=401)
 
-    data: dict[str, Any] = {}
-
-    # Accept JSON (Vue fetch) or regular form-data (fallback)
-    content_type = request.headers.get("Content-Type", "")
-    if "application/json" in content_type:
-        try:
-            data = json.loads(request.body.decode("utf-8") or "{}")
-        except json.JSONDecodeError:
-            return JsonResponse({"detail": "Invalid JSON body."}, status=400)
-    else:
-        data = request.POST.dict()
+    # Handle FormData with file upload
+    data = request.POST
+    image_file = request.FILES.get("image")
 
     errors: dict[str, str] = {}
 
     title = (data.get("title") or "").strip()
     description = (data.get("description") or "").strip()
-    image_url = (data.get("image_url") or "").strip()
     ends_at_raw = (data.get("ends_at") or "").strip()
     starting_price_raw = (data.get("starting_price") or "").strip()
 
@@ -127,9 +118,11 @@ def items_collection(request: HttpRequest) -> JsonResponse:
         title=title,
         description=description,
         starting_price=starting_price,  # type: ignore[arg-type]
-        image_url=image_url,
         ends_at=ends_at,  # type: ignore[arg-type]
     )
+    
+    if image_file:
+        item.image = image_file
 
     # Runs model-level validation (including your clean()).
     try:
@@ -148,7 +141,7 @@ def items_collection(request: HttpRequest) -> JsonResponse:
             "title": item.title,
             "description": item.description,
             "starting_price": str(item.starting_price),
-            "image_url": item.image_url,
+            "image_url": request.build_absolute_uri(item.image.url) if item.image else None,
             "ends_at": item.ends_at.isoformat(),
             "owner_id": item.owner_id,
         },

@@ -17,6 +17,8 @@ from django.contrib import admin
 from django.urls import include, path
 from django.http import HttpResponse
 from api import views as api_views
+from django.conf import settings
+from django.conf.urls.static import static
 
 
 def health_check(_request):
@@ -29,3 +31,7 @@ urlpatterns = [
     path("accounts/", include("django.contrib.auth.urls")),
     path("", include("api.urls")),
 ]
+
+# Serve media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

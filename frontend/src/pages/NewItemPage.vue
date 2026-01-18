@@ -79,17 +79,52 @@
           </div>
         </div>
 
-        <!-- Image URL -->
+        <!-- Image Upload (Drag & Drop) -->
         <div>
-          <label for="image_url">Image URL (optional)</label>
-          <input
-            id="image_url"
-            v-model.trim="form.image_url"
-            type="url"
-            placeholder="https://..."
-          />
-          <div v-if="errors.image_url" class="error-text">
-            {{ errors.image_url }}
+          <label>Image (optional)</label>
+          <div
+            class="upload-zone"
+            :class="{ 'drag-over': isDragging, 'has-image': imagePreview }"
+            @drop.prevent="handleDrop"
+            @dragover.prevent="isDragging = true"
+            @dragleave.prevent="isDragging = false"
+            @click="triggerFileInput"
+          >
+            <input
+              ref="fileInput"
+              type="file"
+              accept="image/*"
+              @change="handleFileSelect"
+              style="display: none"
+            />
+            
+            <div v-if="!imagePreview" class="upload-placeholder">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+              <p>Click to upload or drag and drop</p>
+              <span class="upload-hint">PNG, JPG, GIF up to 10MB</span>
+            </div>
+            
+            <div v-else class="image-preview-container">
+              <img :src="imagePreview" alt="Preview" class="image-preview" />
+              <button
+                type="button"
+                class="remove-image"
+                @click.stop="removeImage"
+                title="Remove image"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div v-if="errors.image" class="error-text">
+            {{ errors.image }}
           </div>
         </div>
 
@@ -112,15 +147,6 @@
     description: string;
     starting_price: string;
     ends_at: string; // datetime-local string
-    image_url: string;
-    };
-
-    type NewItemPayload = {
-    title: string;
-    description: string;
-    starting_price: string;
-    ends_at: string;
-    image_url: string;
     };
 
     export default defineComponent({
@@ -131,12 +157,14 @@
         successMessage: "",
         generalError: "",
         errors: {} as Record<string, string>,
+        isDragging: false,
+        imageFile: null as File | null,
+        imagePreview: "" as string,
         form: {
             title: "",
             description: "",
             starting_price: "",  
-            ends_at: "",         
-            image_url: "",       
+            ends_at: "",       
         } as NewItemForm,
         };
     },
@@ -173,6 +201,53 @@
         return Object.keys(this.errors).length === 0;
         },
 
+        triggerFileInput() {
+            const input = this.$refs.fileInput as HTMLInputElement;
+            input?.click();
+        },
+
+        handleFileSelect(event: Event) {
+            const target = event.target as HTMLInputElement;
+            const file = target.files?.[0];
+            if (file) {
+                this.setImageFile(file);
+            }
+        },
+
+        handleDrop(event: DragEvent) {
+            this.isDragging = false;
+            const file = event.dataTransfer?.files[0];
+            if (file && file.type.startsWith('image/')) {
+                this.setImageFile(file);
+            }
+        },
+
+        setImageFile(file: File) {
+            // Validate file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                this.errors.image = "Image must be less than 10MB.";
+                return;
+            }
+
+            this.imageFile = file;
+            this.errors.image = "";
+
+            // Create preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                this.imagePreview = e.target?.result as string;
+            };
+            reader.readAsDataURL(file);
+        },
+
+        removeImage() {
+            this.imageFile = null;
+            this.imagePreview = "";
+            this.errors.image = "";
+            const input = this.$refs.fileInput as HTMLInputElement;
+            if (input) input.value = "";
+        },
+
         async submit() {
         if (!this.validateClient()) return;
 
@@ -181,20 +256,20 @@
         this.successMessage = "";
 
         try {
-            const payload: NewItemPayload = {
-            title: this.form.title.trim(),
-            description: this.form.description.trim(),
-            starting_price: this.form.starting_price.trim(),
-            ends_at: this.form.ends_at,
-            image_url: this.form.image_url.trim(),
-            };
+            // Use FormData for file upload
+            const formData = new FormData();
+            formData.append("title", this.form.title.trim());
+            formData.append("description", this.form.description.trim());
+            formData.append("starting_price", this.form.starting_price.trim());
+            formData.append("ends_at", this.form.ends_at);
+            
+            if (this.imageFile) {
+                formData.append("image", this.imageFile);
+            }
 
             const resp = await apiFetch("/api/items/", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
+            body: formData,
             });
 
             const data = await resp.json().catch(() => ({}));
@@ -206,8 +281,8 @@
                 description: "",
                 starting_price: "",
                 ends_at: "",
-                image_url: "",
             };
+            this.removeImage();
             this.errors = {};
             return;
             }
@@ -416,6 +491,105 @@ button[type="submit"]:disabled {
   color: #fca5a5;
   margin-top: 6px;
   line-height: 1.4;
+}
+
+.upload-zone {
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-zone:hover {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.upload-zone.drag-over {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  transform: scale(1.02);
+}
+
+.upload-zone.has-image {
+  padding: 0;
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #8b95a8;
+}
+
+.upload-placeholder svg {
+  opacity: 0.5;
+  color: #f59e0b;
+}
+
+.upload-placeholder p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.upload-hint {
+  font-size: 13px;
+  color: #8b95a8;
+}
+
+.image-preview-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+}
+
+.image-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+  max-height: 400px;
+}
+
+.remove-image {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(239, 68, 68, 0.9);
+  border: none;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #ffffff;
+  backdrop-filter: blur(8px);
+}
+
+.remove-image:hover {
+  background: rgba(239, 68, 68, 1);
+  transform: scale(1.1);
+}
+
+.remove-image svg {
+  stroke-width: 3;
 }
 
 /* Responsive adjustments */
