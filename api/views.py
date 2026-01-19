@@ -17,7 +17,7 @@ from django.views.decorators.http import require_POST
 
 
 
-from .models import Item, ItemQuestion, ItemAnswer
+from .models import Item, Question, Answer
 
 
 def signup(request: HttpRequest) -> HttpResponse:
@@ -217,18 +217,18 @@ def item_questions_list_or_create(request: HttpRequest, item_id: int) -> JsonRes
     
     if request.method == "GET":
         # Public - anyone can view questions
-        questions = ItemQuestion.objects.filter(item=item).select_related("asker", "answer")
+        questions = Question.objects.filter(item=item).select_related("author", "answer")
         return JsonResponse(
             {
                 "questions": [
                     {
                         "id": q.id,
-                        "question_text": q.question_text,
-                        "asker": q.asker.username,
-                        "asker_id": q.asker_id,
+                        "content": q.content,
+                        "author": q.author.username,
+                        "author_id": q.author_id,
                         "created_at": q.created_at.isoformat(),
                         "answer": {
-                            "answer_text": q.answer.answer_text,
+                            "content": q.answer.content,
                             "created_at": q.answer.created_at.isoformat(),
                         } if hasattr(q, "answer") else None,
                     }
@@ -247,26 +247,26 @@ def item_questions_list_or_create(request: HttpRequest, item_id: int) -> JsonRes
         try:
             data = json.loads(request.body)
         except json.JSONDecodeError:
-            return JsonResponse({"errors": {"question_text": "Invalid JSON."}}, status=400)
+            return JsonResponse({"errors": {"content": "Invalid JSON."}}, status=400)
         
-        question_text = (data.get("question_text") or "").strip()
+        content = (data.get("content") or "").strip()
         
-        if not question_text:
-            return JsonResponse({"errors": {"question_text": "Question text is required."}}, status=400)
+        if not content:
+            return JsonResponse({"errors": {"content": "Question content is required."}}, status=400)
         
         # Create the question
-        question = ItemQuestion.objects.create(
+        question = Question.objects.create(
             item=item,
-            asker=request.user,
-            question_text=question_text,
+            author=request.user,
+            content=content,
         )
         
         return JsonResponse(
             {
                 "id": question.id,
-                "question_text": question.question_text,
-                "asker": question.asker.username,
-                "asker_id": question.asker_id,
+                "content": question.content,
+                "author": question.author.username,
+                "author_id": question.author_id,
                 "created_at": question.created_at.isoformat(),
                 "answer": None,
             },
@@ -289,8 +289,8 @@ def question_answer(request: HttpRequest, question_id: int) -> JsonResponse:
     
     # Check if question exists
     try:
-        question = ItemQuestion.objects.select_related("item").get(pk=question_id)
-    except ItemQuestion.DoesNotExist:
+        question = Question.objects.select_related("item").get(pk=question_id)
+    except Question.DoesNotExist:
         return JsonResponse({"detail": "Question not found."}, status=404)
     
     # Permission check: only item owner can answer
@@ -301,24 +301,24 @@ def question_answer(request: HttpRequest, question_id: int) -> JsonResponse:
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
-        return JsonResponse({"errors": {"answer_text": "Invalid JSON."}}, status=400)
+        return JsonResponse({"errors": {"content": "Invalid JSON."}}, status=400)
     
-    answer_text = (data.get("answer_text") or "").strip()
+    content = (data.get("content") or "").strip()
     
-    if not answer_text:
-        return JsonResponse({"errors": {"answer_text": "Answer text is required."}}, status=400)
+    if not content:
+        return JsonResponse({"errors": {"content": "Answer content is required."}}, status=400)
     
     # Create or update the answer
-    answer, created = ItemAnswer.objects.update_or_create(
+    answer, created = Answer.objects.update_or_create(
         question=question,
-        defaults={"answer_text": answer_text},
+        defaults={"content": content},
     )
     
     return JsonResponse(
         {
             "id": answer.id,
             "question_id": question.id,
-            "answer_text": answer.answer_text,
+            "content": answer.content,
             "created_at": answer.created_at.isoformat(),
         },
         status=201 if created else 200,
