@@ -5,7 +5,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from django.contrib.auth import login, logout
-from django.contrib.auth.forms import UserCreationForm
+from .forms import SignUpForm
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, JsonResponse
 from django.http import HttpResponse
@@ -21,20 +21,17 @@ from .models import Item
 
 
 def signup(request: HttpRequest) -> HttpResponse:
-    """
-    GET: show signup form
-    POST: create user and log them in
-    """
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
+        form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
             return redirect("/")
     else:
-        form = UserCreationForm()
+        form = SignUpForm()
 
     return render(request, "registration/signup.html", {"form": form})
+
 
 
 
