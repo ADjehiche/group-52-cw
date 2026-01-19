@@ -9,9 +9,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Max, Q
 from django.utils import timezone
-
-class User(AbstractUser):
-    pass
+from django.contrib.auth.models import User
 
 class PageView(models.Model):
     count = models.IntegerField(default=0)
