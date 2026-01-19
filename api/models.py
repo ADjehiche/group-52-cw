@@ -30,7 +30,7 @@ class Item(models.Model):
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.00"))],
     )
-    image_url = models.URLField(blank=True)
+    image = models.ImageField(upload_to="items/", blank=True, null=True)
     ends_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
 
