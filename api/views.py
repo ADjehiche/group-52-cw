@@ -17,7 +17,7 @@ from django.views.decorators.http import require_POST
 
 
 
-from .models import Item
+from .models import Item, ItemImage
 
 
 def signup(request: HttpRequest) -> HttpResponse:
@@ -41,11 +41,14 @@ def signup(request: HttpRequest) -> HttpResponse:
 
 def items_collection(request: HttpRequest) -> JsonResponse:
     """
+    GET /api/items/
+    List all auction items with their images.
+    
     POST /api/items/
-    Create a new auction item for the authenticated user.
+    Create a new auction item for the authenticated user with multiple images (up to 8).
     """
     if request.method == "GET":
-        items = Item.objects.all().order_by("-id")
+        items = Item.objects.all().order_by("-id").prefetch_related('images')
         return JsonResponse(
             {
                 "items": [
@@ -54,7 +57,14 @@ def items_collection(request: HttpRequest) -> JsonResponse:
                         "title": item.title,
                         "description": item.description,
                         "starting_price": str(item.starting_price),
-                        "image_url": request.build_absolute_uri(item.image.url) if item.image else None,
+                        "images": [
+                            {
+                                "id": img.id,
+                                "url": request.build_absolute_uri(img.image.url),
+                                "order": img.order,
+                            }
+                            for img in item.images.all()
+                        ],
                         "ends_at": item.ends_at.isoformat(),
                         "owner_id": item.owner_id,
                     }
@@ -70,9 +80,9 @@ def items_collection(request: HttpRequest) -> JsonResponse:
     if not request.user.is_authenticated:
         return JsonResponse({"detail": "Authentication required."}, status=401)
 
-    # Handle FormData with file upload
+    # Handle FormData with multiple file uploads
     data = request.POST
-    image_file = request.FILES.get("image")
+    image_files = request.FILES.getlist("images")  # Support multiple images
 
     errors: dict[str, str] = {}
 
@@ -113,6 +123,10 @@ def items_collection(request: HttpRequest) -> JsonResponse:
     if errors:
         return JsonResponse({"errors": errors}, status=400)
 
+    # Validate number of images (max 8)
+    if len(image_files) > 8:
+        return JsonResponse({"errors": {"images": "Maximum 8 images allowed."}}, status=400)
+
     item = Item(
         owner=request.user,
         title=title,
@@ -120,9 +134,6 @@ def items_collection(request: HttpRequest) -> JsonResponse:
         starting_price=starting_price,  # type: ignore[arg-type]
         ends_at=ends_at,  # type: ignore[arg-type]
     )
-    
-    if image_file:
-        item.image = image_file
 
     # Runs model-level validation (including your clean()).
     try:
@@ -135,13 +146,39 @@ def items_collection(request: HttpRequest) -> JsonResponse:
             field_errors[field] = msgs[0] if msgs else "Invalid value."
         return JsonResponse({"errors": field_errors}, status=400)
 
+    # Create ItemImage instances for each uploaded file
+    created_images = []
+    for idx, image_file in enumerate(image_files):
+        try:
+            item_image = ItemImage(
+                item=item,
+                image=image_file,
+                order=idx
+            )
+            item_image.full_clean()
+            item_image.save()
+            created_images.append(item_image)
+        except ValidationError as exc:
+            # If image validation fails, return error
+            field_errors = {}
+            for field, msgs in exc.message_dict.items():
+                field_errors[f"image_{idx}_{field}"] = msgs[0] if msgs else "Invalid value."
+            return JsonResponse({"errors": field_errors}, status=400)
+
     return JsonResponse(
         {
             "id": item.pk,
             "title": item.title,
             "description": item.description,
             "starting_price": str(item.starting_price),
-            "image_url": request.build_absolute_uri(item.image.url) if item.image else None,
+            "images": [
+                {
+                    "id": img.id,
+                    "url": request.build_absolute_uri(img.image.url),
+                    "order": img.order,
+                }
+                for img in created_images
+            ],
             "ends_at": item.ends_at.isoformat(),
             "owner_id": item.owner_id,
         },
