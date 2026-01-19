@@ -7,6 +7,7 @@ from typing import Any
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
+from django.core.validators import URLValidator
 from django.http import HttpRequest, JsonResponse
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
@@ -17,7 +18,7 @@ from django.views.decorators.http import require_POST
 
 
 
-from .models import Item
+from .models import Item, ItemImage
 
 
 def signup(request: HttpRequest) -> HttpResponse:
@@ -45,7 +46,7 @@ def items_collection(request: HttpRequest) -> JsonResponse:
     Create a new auction item for the authenticated user.
     """
     if request.method == "GET":
-        items = Item.objects.all().order_by("-id")
+        items = Item.objects.all().prefetch_related("images").order_by("-id")
         return JsonResponse(
             {
                 "items": [
@@ -55,6 +56,13 @@ def items_collection(request: HttpRequest) -> JsonResponse:
                         "description": item.description,
                         "starting_price": str(item.starting_price),
                         "image_url": item.image_url,
+                        "image_urls": [
+                            request.build_absolute_uri(img.image_file.url)
+                            if img.image_file
+                            else img.image_url
+                            for img in item.images.all()
+                        ]
+                        or ([item.image_url] if item.image_url else []),
                         "ends_at": item.ends_at.isoformat(),
                         "owner_id": item.owner_id,
                     }
@@ -72,7 +80,7 @@ def items_collection(request: HttpRequest) -> JsonResponse:
 
     data: dict[str, Any] = {}
 
-    # Accept JSON (Vue fetch) or regular form-data (fallback)
+    # Accept JSON (Vue fetch) or multipart form-data (uploads)
     content_type = request.headers.get("Content-Type", "")
     if "application/json" in content_type:
         try:
@@ -87,11 +95,41 @@ def items_collection(request: HttpRequest) -> JsonResponse:
     title = (data.get("title") or "").strip()
     description = (data.get("description") or "").strip()
     image_url = (data.get("image_url") or "").strip()
+    image_urls_raw = data.get("image_urls")
+    image_files = request.FILES.getlist("images")
     ends_at_raw = (data.get("ends_at") or "").strip()
     starting_price_raw = (data.get("starting_price") or "").strip()
 
     if not title:
         errors["title"] = "Title is required."
+
+    image_urls: list[str] = []
+    if isinstance(image_urls_raw, list):
+        image_urls = [str(url).strip() for url in image_urls_raw if str(url).strip()]
+    elif image_urls_raw is not None:
+        errors["image_urls"] = "Image URLs must be a list."
+    elif image_url:
+        image_urls = [image_url]
+
+    if image_urls:
+        if len(image_urls) > 8:
+            errors["image_urls"] = "You can upload up to 8 images."
+        else:
+            validator = URLValidator()
+            for url in image_urls:
+                try:
+                    validator(url)
+                except ValidationError:
+                    errors["image_urls"] = "All image URLs must be valid URLs."
+                    break
+
+    if image_files:
+        if len(image_files) > 8:
+            errors["images"] = "You can upload up to 8 images."
+
+    if image_urls and image_files:
+        if len(image_urls) + len(image_files) > 8:
+            errors["images"] = "You can upload up to 8 images."
 
     # Parse money
     starting_price: Decimal | None = None
@@ -127,7 +165,7 @@ def items_collection(request: HttpRequest) -> JsonResponse:
         title=title,
         description=description,
         starting_price=starting_price,  # type: ignore[arg-type]
-        image_url=image_url,
+        image_url=image_urls[0] if image_urls else "",
         ends_at=ends_at,  # type: ignore[arg-type]
     )
 
@@ -142,6 +180,27 @@ def items_collection(request: HttpRequest) -> JsonResponse:
             field_errors[field] = msgs[0] if msgs else "Invalid value."
         return JsonResponse({"errors": field_errors}, status=400)
 
+    images_to_create: list[ItemImage] = []
+    position = 0
+    for url in image_urls:
+        images_to_create.append(ItemImage(item=item, image_url=url, position=position))
+        position += 1
+
+    for uploaded in image_files:
+        images_to_create.append(ItemImage(item=item, image_file=uploaded, position=position))
+        position += 1
+
+    if images_to_create:
+        ItemImage.objects.bulk_create(images_to_create)
+
+    if images_to_create and not item.image_url:
+        first_image = images_to_create[0]
+        if first_image.image_file:
+            item.image_url = request.build_absolute_uri(first_image.image_file.url)
+        else:
+            item.image_url = first_image.image_url
+        item.save(update_fields=["image_url"])
+
     return JsonResponse(
         {
             "id": item.pk,
@@ -149,6 +208,10 @@ def items_collection(request: HttpRequest) -> JsonResponse:
             "description": item.description,
             "starting_price": str(item.starting_price),
             "image_url": item.image_url,
+            "image_urls": [
+                request.build_absolute_uri(img.image_file.url) if img.image_file else img.image_url
+                for img in item.images.all()
+            ],
             "ends_at": item.ends_at.isoformat(),
             "owner_id": item.owner_id,
         },

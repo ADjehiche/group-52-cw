@@ -12,6 +12,36 @@
     </div>
 
     <form @submit.prevent="submit">
+      <!-- Image uploads -->
+      <div class="mb-3">
+        <label class="form-label">Images (up to 8)</label>
+        <input
+          ref="imageInput"
+          class="form-control"
+          :class="{ 'is-invalid': !!errors.images }"
+          type="file"
+          accept="image/*"
+          multiple
+          @change="onImagesSelected"
+        />
+        <div class="d-flex gap-2 mt-2 align-items-center">
+          <span class="text-muted small">
+            {{ form.image_files.length }} / 8 selected
+          </span>
+          <button
+            v-if="form.image_files.length"
+            class="btn btn-outline-danger btn-sm"
+            type="button"
+            @click="clearImages"
+          >
+            Clear
+          </button>
+        </div>
+        <div v-if="errors.images" class="invalid-feedback d-block">
+          {{ errors.images }}
+        </div>
+      </div>
+
       <!-- Title -->
       <div class="mb-3">
         <label class="form-label">Title</label>
@@ -76,23 +106,8 @@
         </div>
       </div>
 
-      <!-- Image URL -->
-      <div class="mb-3">
-        <label class="form-label">Image URL (optional)</label>
-        <input
-          v-model.trim="form.image_url"
-          class="form-control"
-          :class="{ 'is-invalid': !!errors.image_url }"
-          type="url"
-          placeholder="https://..."
-        />
-        <div v-if="errors.image_url" class="invalid-feedback">
-          {{ errors.image_url }}
-        </div>
-      </div>
-
       <button class="btn btn-primary" type="submit" :disabled="submitting">
-        {{ submitting ? "Creating..." : "Create item" }}
+        {{ submitting ? "Creating..." : "Create listing" }}
       </button>
     </form>
   </div>
@@ -109,15 +124,7 @@
     description: string;
     starting_price: string;
     ends_at: string; // datetime-local string
-    image_url: string;
-    };
-
-    type NewItemPayload = {
-    title: string;
-    description: string;
-    starting_price: string;
-    ends_at: string;
-    image_url: string;
+    image_files: File[];
     };
 
     export default defineComponent({
@@ -133,11 +140,27 @@
             description: "",
             starting_price: "",  
             ends_at: "",         
-            image_url: "",       
+            image_files: [],
         } as NewItemForm,
         };
     },
     methods: {
+        onImagesSelected(event: Event) {
+          const input = event.target as HTMLInputElement;
+          const files = input.files ? Array.from(input.files) : [];
+          this.form.image_files = files.slice(0, 8);
+          if (files.length > 8) {
+            this.errors.images = "You can upload up to 8 images.";
+          }
+        },
+        clearImages() {
+          this.form.image_files = [];
+          this.errors.images = "";
+          const input = this.$refs.imageInput as HTMLInputElement | undefined;
+          if (input) {
+            input.value = "";
+          }
+        },
         validateClient(): boolean {
         this.errors = {};
         this.generalError = "";
@@ -167,6 +190,10 @@
           }
         }
 
+        if (this.form.image_files.length > 8) {
+          this.errors.images = "You can upload up to 8 images.";
+        }
+
         return Object.keys(this.errors).length === 0;
         },
 
@@ -178,20 +205,18 @@
         this.successMessage = "";
 
         try {
-            const payload: NewItemPayload = {
-            title: this.form.title.trim(),
-            description: this.form.description.trim(),
-            starting_price: this.form.starting_price.trim(),
-            ends_at: this.form.ends_at,
-            image_url: this.form.image_url.trim(),
-            };
+            const formData = new FormData();
+            formData.append("title", this.form.title.trim());
+            formData.append("description", this.form.description.trim());
+            formData.append("starting_price", this.form.starting_price.trim());
+            formData.append("ends_at", this.form.ends_at);
+            this.form.image_files.forEach((file) => {
+              formData.append("images", file);
+            });
 
             const resp = await apiFetch("/api/items/", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
+            body: formData,
             });
 
             const data = await resp.json().catch(() => ({}));
@@ -203,8 +228,9 @@
                 description: "",
                 starting_price: "",
                 ends_at: "",
-                image_url: "",
+              image_files: [],
             };
+            this.clearImages();
             this.errors = {};
             return;
             }

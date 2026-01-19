@@ -53,6 +53,29 @@ class Item(models.Model):
         return self.title
 
 
+class ItemImage(models.Model):
+    item = models.ForeignKey(
+        Item,
+        on_delete=models.CASCADE,
+        related_name="images",
+    )
+    image_url = models.URLField(blank=True)
+    image_file = models.ImageField(upload_to="item_images/", blank=True, null=True)
+    position = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["position", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["item", "position"],
+                name="item_image_unique_position",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"Image {self.position + 1} for item {self.item_id}"
+
+
 class Bid(models.Model):
     item = models.ForeignKey(
         Item,
