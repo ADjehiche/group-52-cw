@@ -79,7 +79,7 @@
           </div>
         </div>
 
-        <!-- Image Upload (Drag & Drop) -->
+        <!-- Multiple Image Upload (Drag & Drop) -->
         <div>
           <label>Images (up to 8)</label>
           <div
@@ -369,7 +369,7 @@
 }
 
 .auth-shell {
-  width: min(640px, 100%);
+  width: min(740px, 100%);
   background: #1a1f2e;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
@@ -523,69 +523,79 @@ button[type="submit"]:disabled {
   line-height: 1.4;
 }
 
-.upload-zone {
-  border: 2px dashed rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.02);
+/* Multi-image grid styles */
+.images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.image-slot {
+  aspect-ratio: 1;
   border-radius: 12px;
-  padding: 32px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  overflow: hidden;
   position: relative;
-  min-height: 200px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.image-slot.has-image {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.image-slot.upload-slot {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.upload-zone:hover {
-  border-color: rgba(245, 158, 11, 0.4);
+.image-slot.upload-slot:hover {
+  border-color: rgba(245, 158, 11, 0.6);
   background: rgba(255, 255, 255, 0.04);
-}
-
-.upload-zone.drag-over {
-  border-color: #f59e0b;
-  background: rgba(245, 158, 11, 0.1);
   transform: scale(1.02);
 }
 
-.upload-zone.has-image {
-  padding: 0;
-  border-style: solid;
-  border-color: rgba(255, 255, 255, 0.1);
+.image-slot.upload-slot.drag-over {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  transform: scale(1.05);
 }
 
 .upload-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
   color: #8b95a8;
+  padding: 12px;
 }
 
 .upload-placeholder svg {
-  opacity: 0.5;
+  opacity: 0.6;
   color: #f59e0b;
 }
 
 .upload-placeholder p {
   margin: 0;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 500;
   color: #ffffff;
 }
 
 .upload-hint {
-  font-size: 13px;
+  font-size: 11px;
   color: #8b95a8;
 }
 
 .image-preview-container {
   position: relative;
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  height: 100%;
   min-height: 200px;
 }
 
@@ -607,20 +617,21 @@ button[type="submit"]:disabled {
 
 .image-preview {
   width: 100%;
-  height: 140px;
-  object-fit: cover;
-  border-radius: 8px;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+  max-height: 400px;
 }
 
 .remove-image {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 12px;
+  right: 12px;
   background: rgba(239, 68, 68, 0.9);
   border: none;
-  border-radius: 8px;
-  width: 36px;
-  height: 36px;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -628,6 +639,7 @@ button[type="submit"]:disabled {
   transition: all 0.2s ease;
   color: #ffffff;
   backdrop-filter: blur(8px);
+  z-index: 2;
 }
 
 .remove-image:hover {
@@ -639,10 +651,27 @@ button[type="submit"]:disabled {
   stroke-width: 3;
 }
 
+.image-number {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .form-row {
     grid-template-columns: 1fr;
+  }
+  
+  .images-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
 }
 
@@ -654,5 +683,11 @@ button[type="submit"]:disabled {
   h1 {
     font-size: 24px;
   }
+  
+  .images-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
+  }
 }
+
 </style>
