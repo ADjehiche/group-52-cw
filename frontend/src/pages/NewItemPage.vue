@@ -81,10 +81,10 @@
 
         <!-- Image Upload (Drag & Drop) -->
         <div>
-          <label>Image (optional)</label>
+          <label>Images (up to 8)</label>
           <div
             class="upload-zone"
-            :class="{ 'drag-over': isDragging, 'has-image': imagePreview }"
+            :class="{ 'drag-over': isDragging, 'has-image': imagePreviews.length }"
             @drop.prevent="handleDrop"
             @dragover.prevent="isDragging = true"
             @dragleave.prevent="isDragging = false"
@@ -94,37 +94,47 @@
               ref="fileInput"
               type="file"
               accept="image/*"
+              multiple
               @change="handleFileSelect"
               style="display: none"
             />
             
-            <div v-if="!imagePreview" class="upload-placeholder">
+            <div v-if="!imagePreviews.length" class="upload-placeholder">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                 <circle cx="8.5" cy="8.5" r="1.5"></circle>
                 <polyline points="21 15 16 10 5 21"></polyline>
               </svg>
               <p>Click to upload or drag and drop</p>
-              <span class="upload-hint">PNG, JPG, GIF up to 10MB</span>
+              <span class="upload-hint">PNG, JPG, GIF up to 10MB each (max 8)</span>
             </div>
             
             <div v-else class="image-preview-container">
-              <img :src="imagePreview" alt="Preview" class="image-preview" />
-              <button
-                type="button"
-                class="remove-image"
-                @click.stop="removeImage"
-                title="Remove image"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
+              <div class="image-preview-grid">
+                <div
+                  v-for="(preview, index) in imagePreviews"
+                  :key="preview + index"
+                  class="image-preview-item"
+                >
+                  <img :src="preview" alt="Preview" class="image-preview" />
+                  <button
+                    type="button"
+                    class="remove-image"
+                    @click.stop="removeImage(index)"
+                    title="Remove image"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <span class="upload-hint">{{ imagePreviews.length }} / 8 selected</span>
             </div>
           </div>
-          <div v-if="errors.image" class="error-text">
-            {{ errors.image }}
+          <div v-if="errors.image || errors.images" class="error-text">
+            {{ errors.image || errors.images }}
           </div>
         </div>
 
@@ -158,8 +168,8 @@
         generalError: "",
         errors: {} as Record<string, string>,
         isDragging: false,
-        imageFile: null as File | null,
-        imagePreview: "" as string,
+        imageFiles: [] as File[],
+        imagePreviews: [] as string[],
         form: {
             title: "",
             description: "",
@@ -208,44 +218,56 @@
 
         handleFileSelect(event: Event) {
             const target = event.target as HTMLInputElement;
-            const file = target.files?.[0];
-            if (file) {
-                this.setImageFile(file);
-            }
+          const files = target.files;
+          if (files && files.length) {
+            this.addImages(files);
+          }
+          if (target) target.value = "";
         },
 
         handleDrop(event: DragEvent) {
             this.isDragging = false;
-            const file = event.dataTransfer?.files[0];
-            if (file && file.type.startsWith('image/')) {
-                this.setImageFile(file);
-            }
+          const files = event.dataTransfer?.files;
+          if (files && files.length) {
+            this.addImages(files);
+          }
         },
 
-        setImageFile(file: File) {
-            // Validate file size (10MB max)
-            if (file.size > 10 * 1024 * 1024) {
-                this.errors.image = "Image must be less than 10MB.";
-                return;
+        addImages(files: FileList | File[]) {
+          const maxImages = 8;
+          const incoming = Array.from(files);
+
+          for (const file of incoming) {
+            if (this.imageFiles.length >= maxImages) {
+              this.errors.images = "Maximum 8 images allowed.";
+              break;
             }
 
-            this.imageFile = file;
-            this.errors.image = "";
+            if (!file.type.startsWith("image/")) {
+              this.errors.images = "Only image files are allowed.";
+              continue;
+            }
 
-            // Create preview
+            if (file.size > 10 * 1024 * 1024) {
+              this.errors.images = "Each image must be less than 10MB.";
+              continue;
+            }
+
+            this.imageFiles.push(file);
+            this.errors.images = "";
+
             const reader = new FileReader();
             reader.onload = (e) => {
-                this.imagePreview = e.target?.result as string;
+              this.imagePreviews.push(e.target?.result as string);
             };
             reader.readAsDataURL(file);
+          }
         },
 
-        removeImage() {
-            this.imageFile = null;
-            this.imagePreview = "";
-            this.errors.image = "";
-            const input = this.$refs.fileInput as HTMLInputElement;
-            if (input) input.value = "";
+        removeImage(index: number) {
+          this.imageFiles.splice(index, 1);
+          this.imagePreviews.splice(index, 1);
+          this.errors.images = "";
         },
 
         async submit() {
@@ -263,8 +285,8 @@
             formData.append("starting_price", this.form.starting_price.trim());
             formData.append("ends_at", this.form.ends_at);
             
-            if (this.imageFile) {
-                formData.append("image", this.imageFile);
+            if (this.imageFiles.length) {
+              this.imageFiles.forEach((file) => formData.append("images", file));
             }
 
             const resp = await apiFetch("/api/items/", {
@@ -282,7 +304,8 @@
                 starting_price: "",
                 ends_at: "",
             };
-            this.removeImage();
+            this.imageFiles = [];
+            this.imagePreviews = [];
             this.errors = {};
             return;
             }
@@ -560,22 +583,39 @@ button[type="submit"]:disabled {
 .image-preview-container {
   position: relative;
   width: 100%;
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   min-height: 200px;
+}
+
+.image-preview-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.image-preview-item {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 6px;
 }
 
 .image-preview {
   width: 100%;
-  height: 100%;
-  object-fit: contain;
-  border-radius: 12px;
-  max-height: 400px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 8px;
 }
 
 .remove-image {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 8px;
+  right: 8px;
   background: rgba(239, 68, 68, 0.9);
   border: none;
   border-radius: 8px;
