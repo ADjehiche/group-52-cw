@@ -1,7 +1,12 @@
 {
   "nav": {
     "mainPage": "Main Page",
-    "otherPage": "Other Page"
+    "otherPage": "Other Page",
+    "newItem": "New Item",
+    "login": "Login",
+    "signup": "Sign up",
+    "logout": "Logout",
+    "loggingOut": "Logging out..."
   },
   "pages": {
     "main": {

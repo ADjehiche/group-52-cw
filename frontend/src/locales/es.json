@@ -1,7 +1,12 @@
 {
   "nav": {
     "mainPage": "Página Principal",
-    "otherPage": "Otra Página"
+    "otherPage": "Otra Página",
+    "newItem": "Nuevo Artículo",
+    "login": "Iniciar Sesión",
+    "signup": "Registrarse",
+    "logout": "Cerrar Sesión",
+    "loggingOut": "Cerrando sesión..."
   },
   "pages": {
     "main": {
