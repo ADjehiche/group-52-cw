@@ -135,3 +135,39 @@ class Bid(models.Model):
 
     def __str__(self) -> str:
         return f"£{self.amount} on item {self.item_id}"
+
+
+class ItemQuestion(models.Model):
+    """Questions asked about an auction item."""
+    item = models.ForeignKey(
+        Item,
+        on_delete=models.CASCADE,
+        related_name="questions",
+    )
+    asker = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="item_questions",
+    )
+    question_text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"Question on '{self.item.title}' by {self.asker.username}"
+
+
+class ItemAnswer(models.Model):
+    """Answer to a question about an auction item (by the item owner)."""
+    question = models.OneToOneField(
+        ItemQuestion,
+        on_delete=models.CASCADE,
+        related_name="answer",
+    )
+    answer_text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f"Answer to question #{self.question_id}"
