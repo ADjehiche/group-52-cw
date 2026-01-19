@@ -22,6 +22,13 @@
                 >
                     {{ $t('nav.newItem') }}
                 </router-link>
+                |
+                <router-link
+                    class=""
+                    :to="{name: 'Profile'}"
+                >
+                    {{ $t('nav.profile') }}
+                </router-link>
                 <template v-if="authChecked">
                     <span class="mx-1">|</span>
                     <template v-if="isAuthed">

@@ -8,6 +8,8 @@ import { fetchAuthStatus } from "@/auth";
 import MainPage from '../pages/MainPage.vue';
 import OtherPage from '../pages/OtherPage.vue';
 import NewItemPage from "../pages/NewItemPage.vue";
+import ProfilePage from "@/pages/ProfilePage.vue";
+
 
 
 let base = (import.meta.env.MODE == 'development') ? import.meta.env.BASE_URL : ''
@@ -20,6 +22,7 @@ const router = createRouter({
     routes: [
         { path: '/', name: 'Main Page', component: MainPage, meta: { requiresAuth: false } },
         { path: '/other/', name: 'Other Page', component: OtherPage, meta: { requiresAuth: false } },
+        { path: "/profile/", name: "Profile", component: ProfilePage, meta: { requiresAuth: true } },
         { path: "/items/new/", name: "New Item", component: NewItemPage, meta: { requiresAuth: true } },
     ]
 })

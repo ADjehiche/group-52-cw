@@ -24,5 +24,6 @@ urlpatterns = [
     path("api/items/", views.items_collection, name="items_collection"),
     path("api/logout/", views.api_logout, name="api_logout"),
     path("api/auth/status/", views.auth_status, name="auth_status"),
+    path("api/profile/", views.profile_api, name="profile_api"),
     path("", views.main_spa, name="main_spa"),
 ]
