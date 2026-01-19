@@ -79,52 +79,70 @@
           </div>
         </div>
 
-        <!-- Image Upload (Drag & Drop) -->
+        <!-- Multiple Image Upload (Drag & Drop) -->
         <div>
-          <label>Image (optional)</label>
-          <div
-            class="upload-zone"
-            :class="{ 'drag-over': isDragging, 'has-image': imagePreview }"
-            @drop.prevent="handleDrop"
-            @dragover.prevent="isDragging = true"
-            @dragleave.prevent="isDragging = false"
-            @click="triggerFileInput"
-          >
-            <input
-              ref="fileInput"
-              type="file"
-              accept="image/*"
-              @change="handleFileSelect"
-              style="display: none"
-            />
-            
-            <div v-if="!imagePreview" class="upload-placeholder">
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-              </svg>
-              <p>Click to upload or drag and drop</p>
-              <span class="upload-hint">PNG, JPG, GIF up to 10MB</span>
-            </div>
-            
-            <div v-else class="image-preview-container">
-              <img :src="imagePreview" alt="Preview" class="image-preview" />
+          <label>Images (up to 8)</label>
+          
+          <!-- Image Grid -->
+          <div class="images-grid">
+            <!-- Existing images -->
+            <div 
+              v-for="(preview, index) in imagePreviews" 
+              :key="index"
+              class="image-slot has-image"
+            >
+              <img :src="preview" alt="Preview" class="image-preview" />
               <button
                 type="button"
                 class="remove-image"
-                @click.stop="removeImage"
-                title="Remove image"
+                @click="removeImage(index)"
+                :title="`Remove image ${index + 1}`"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
               </button>
+              <div class="image-number">{{ index + 1 }}</div>
+            </div>
+
+            <!-- Add image slot (only show if less than 8 images) -->
+            <div 
+              v-if="imageFiles.length < 8"
+              class="image-slot upload-slot"
+              :class="{ 'drag-over': isDragging }"
+              @drop.prevent="handleDrop"
+              @dragover.prevent="isDragging = true"
+              @dragleave.prevent="isDragging = false"
+              @click="triggerFileInput"
+            >
+              <input
+                ref="fileInput"
+                type="file"
+                accept="image/*"
+                multiple
+                @change="handleFileSelect"
+                style="display: none"
+              />
+              
+              <div class="upload-placeholder">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <p>Add image</p>
+                <span class="upload-hint">{{ imageFiles.length }}/8</span>
+              </div>
             </div>
           </div>
-          <div v-if="errors.image" class="error-text">
-            {{ errors.image }}
+
+          <div class="upload-info">
+            <span>Click to upload or drag and drop</span>
+            <span>PNG, JPG, GIF up to 10MB each</span>
+          </div>
+
+          <div v-if="errors.images" class="error-text">
+            {{ errors.images }}
           </div>
         </div>
 
@@ -158,8 +176,8 @@
         generalError: "",
         errors: {} as Record<string, string>,
         isDragging: false,
-        imageFile: null as File | null,
-        imagePreview: "" as string,
+        imageFiles: [] as File[],
+        imagePreviews: [] as string[],
         form: {
             title: "",
             description: "",
@@ -208,44 +226,59 @@
 
         handleFileSelect(event: Event) {
             const target = event.target as HTMLInputElement;
-            const file = target.files?.[0];
-            if (file) {
-                this.setImageFile(file);
-            }
+            const files = Array.from(target.files || []);
+            this.addImageFiles(files);
+            // Reset input so the same file can be selected again
+            target.value = "";
         },
 
         handleDrop(event: DragEvent) {
             this.isDragging = false;
-            const file = event.dataTransfer?.files[0];
-            if (file && file.type.startsWith('image/')) {
-                this.setImageFile(file);
+            const files = Array.from(event.dataTransfer?.files || []).filter(
+                file => file.type.startsWith('image/')
+            );
+            this.addImageFiles(files);
+        },
+
+        addImageFiles(files: File[]) {
+            this.errors.images = "";
+
+            // Calculate how many images we can still add
+            const remainingSlots = 8 - this.imageFiles.length;
+            const filesToAdd = files.slice(0, remainingSlots);
+
+            if (files.length > remainingSlots) {
+                this.errors.images = `Maximum 8 images allowed. Only ${remainingSlots} more can be added.`;
+            }
+
+            for (const file of filesToAdd) {
+                // Validate file size (10MB max)
+                if (file.size > 10 * 1024 * 1024) {
+                    this.errors.images = `${file.name} exceeds 10MB limit.`;
+                    continue;
+                }
+
+                this.imageFiles.push(file);
+
+                // Create preview
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.imagePreviews.push(e.target?.result as string);
+                };
+                reader.readAsDataURL(file);
             }
         },
 
-        setImageFile(file: File) {
-            // Validate file size (10MB max)
-            if (file.size > 10 * 1024 * 1024) {
-                this.errors.image = "Image must be less than 10MB.";
-                return;
-            }
-
-            this.imageFile = file;
-            this.errors.image = "";
-
-            // Create preview
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                this.imagePreview = e.target?.result as string;
-            };
-            reader.readAsDataURL(file);
+        removeImage(index: number) {
+            this.imageFiles.splice(index, 1);
+            this.imagePreviews.splice(index, 1);
+            this.errors.images = "";
         },
 
-        removeImage() {
-            this.imageFile = null;
-            this.imagePreview = "";
-            this.errors.image = "";
-            const input = this.$refs.fileInput as HTMLInputElement;
-            if (input) input.value = "";
+        clearAllImages() {
+            this.imageFiles = [];
+            this.imagePreviews = [];
+            this.errors.images = "";
         },
 
         async submit() {
@@ -263,8 +296,9 @@
             formData.append("starting_price", this.form.starting_price.trim());
             formData.append("ends_at", this.form.ends_at);
             
-            if (this.imageFile) {
-                formData.append("image", this.imageFile);
+            // Append all images
+            for (const imageFile of this.imageFiles) {
+                formData.append("images", imageFile);
             }
 
             const resp = await apiFetch("/api/items/", {
@@ -282,7 +316,7 @@
                 starting_price: "",
                 ends_at: "",
             };
-            this.removeImage();
+            this.clearAllImages();
             this.errors = {};
             return;
             }
@@ -346,7 +380,7 @@
 }
 
 .auth-shell {
-  width: min(640px, 100%);
+  width: min(740px, 100%);
   background: #1a1f2e;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
@@ -500,87 +534,98 @@ button[type="submit"]:disabled {
   line-height: 1.4;
 }
 
-.upload-zone {
-  border: 2px dashed rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.02);
+/* Multi-image grid styles */
+.images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.image-slot {
+  aspect-ratio: 1;
   border-radius: 12px;
-  padding: 32px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  overflow: hidden;
   position: relative;
-  min-height: 200px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.image-slot.has-image {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.image-slot.upload-slot {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.upload-zone:hover {
-  border-color: rgba(245, 158, 11, 0.4);
+.image-slot.upload-slot:hover {
+  border-color: rgba(245, 158, 11, 0.6);
   background: rgba(255, 255, 255, 0.04);
-}
-
-.upload-zone.drag-over {
-  border-color: #f59e0b;
-  background: rgba(245, 158, 11, 0.1);
   transform: scale(1.02);
 }
 
-.upload-zone.has-image {
-  padding: 0;
-  border-style: solid;
-  border-color: rgba(255, 255, 255, 0.1);
+.image-slot.upload-slot.drag-over {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  transform: scale(1.05);
 }
 
 .upload-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
   color: #8b95a8;
+  padding: 12px;
 }
 
 .upload-placeholder svg {
-  opacity: 0.5;
+  opacity: 0.6;
   color: #f59e0b;
 }
 
 .upload-placeholder p {
   margin: 0;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 500;
   color: #ffffff;
 }
 
 .upload-hint {
-  font-size: 13px;
+  font-size: 11px;
   color: #8b95a8;
 }
 
-.image-preview-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  min-height: 200px;
+.upload-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #8b95a8;
+  margin-top: 8px;
 }
 
 .image-preview {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  border-radius: 12px;
-  max-height: 400px;
+  object-fit: cover;
 }
 
 .remove-image {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 6px;
+  right: 6px;
   background: rgba(239, 68, 68, 0.9);
   border: none;
-  border-radius: 8px;
-  width: 36px;
-  height: 36px;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -588,6 +633,7 @@ button[type="submit"]:disabled {
   transition: all 0.2s ease;
   color: #ffffff;
   backdrop-filter: blur(8px);
+  z-index: 2;
 }
 
 .remove-image:hover {
@@ -599,10 +645,27 @@ button[type="submit"]:disabled {
   stroke-width: 3;
 }
 
+.image-number {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .form-row {
     grid-template-columns: 1fr;
+  }
+  
+  .images-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
 }
 
@@ -614,5 +677,11 @@ button[type="submit"]:disabled {
   h1 {
     font-size: 24px;
   }
+  
+  .images-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
+  }
 }
+
 </style>
