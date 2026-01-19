@@ -11,7 +11,18 @@ from django.db.models import Max, Q
 from django.utils import timezone
 
 class User(AbstractUser):
-    pass
+    """
+    Custom user model
+    - email: already present on AbstractUser; we enforce non-blank + unique
+    - date_of_birth: new
+    - profile_image: new
+    """
+    email = models.EmailField(unique=True)
+    date_of_birth = models.DateField(blank=True, null=True)
+    profile_image = models.ImageField(upload_to="profile_images/", blank=True, null=True)
+
+    def __str__(self) -> str:
+        return self.username
 
 class PageView(models.Model):
     count = models.IntegerField(default=0)
