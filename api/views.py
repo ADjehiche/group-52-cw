@@ -178,3 +178,27 @@ def auth_status(request: HttpRequest) -> JsonResponse:
         )
     return JsonResponse({"authenticated": False, "user": None})
 
+def api_questions(request: HttpRequest) -> JsonResponse:
+    """Get a list of questions. For a specific user, pass the user_id as a query parameter."""
+    user_id = request.GET.get("user_id")
+    if user_id:
+        questions = Question.objects.filter(author_id=user_id).order_by("-created_at")
+    else:
+        questions = Question.objects.all().order_by("-created_at")
+    return JsonResponse(
+        {
+            "questions": [
+                {
+                    "id": question.id,
+                    "title": question.title,
+                    "content": question.content,
+                    "author": question.author.username,
+                    "created_at": question.created_at.isoformat(),
+                    "updated_at": question.updated_at.isoformat(),
+                    "likes": question.likes,
+                }
+                for question in questions
+            ]
+        },
+        status=200,
+    )
