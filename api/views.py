@@ -11,14 +11,15 @@ from django.http import HttpRequest, JsonResponse
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import parse_datetime, parse_date
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods, require_POST
-
+from django.contrib.auth import get_user_model
 
 from .models import Item
 from .forms import SignUpForm
 
+User = get_user_model()
 
 def signup(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
