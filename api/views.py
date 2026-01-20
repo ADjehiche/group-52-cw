@@ -5,7 +5,6 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from django.contrib.auth import login, logout
-from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, JsonResponse
 from django.http import HttpResponse
@@ -14,30 +13,20 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
-
-
-
 from .models import Item, ItemImage
-
+from .forms import SignUpForm
 
 def signup(request: HttpRequest) -> HttpResponse:
-    """
-    GET: show signup form
-    POST: create user and log them in
-    """
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
+        form = SignUpForm(request.POST, request.FILES)
         if form.is_valid():
             user = form.save()
             login(request, user)
             return redirect("/")
     else:
-        form = UserCreationForm()
+        form = SignUpForm()
 
     return render(request, "registration/signup.html", {"form": form})
-
-
-
 
 def items_collection(request: HttpRequest) -> JsonResponse:
     """
