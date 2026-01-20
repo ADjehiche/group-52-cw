@@ -173,18 +173,21 @@ def auth_status(request: HttpRequest) -> JsonResponse:
     return JsonResponse({"authenticated": False, "user": None})
 
 def _profile_payload(request: HttpRequest) -> dict[str, Any]:
-    """Serialize the current user for the profile page."""
     u = request.user
+
+    profile_url = None
+    try:
+        if getattr(u, "profile_image", None) and u.profile_image:
+            profile_url = u.profile_image.url  # IMPORTANT: signed url
+    except Exception:
+        profile_url = None
+
     return {
         "id": u.pk,
         "username": u.username,
         "email": u.email,
         "date_of_birth": u.date_of_birth.isoformat() if getattr(u, "date_of_birth", None) else None,
-        "profile_image_url": (
-            request.build_absolute_uri(u.profile_image.url)
-            if getattr(u, "profile_image", None)
-            else None
-        ),
+        "profile_image_url": profile_url,
     }
 
 

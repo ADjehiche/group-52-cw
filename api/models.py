@@ -9,6 +9,8 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Max, Q
 from django.utils import timezone
+from .storage import PrivateMediaStorage
+
 
 class User(AbstractUser):
     """
@@ -19,8 +21,12 @@ class User(AbstractUser):
     """
     email = models.EmailField(unique=True)
     date_of_birth = models.DateField(blank=True, null=True)
-    profile_image = models.ImageField(upload_to="profile_images/", blank=True, null=True)
-
+    profile_image = models.ImageField(
+        upload_to="profile_images/",
+        storage=PrivateMediaStorage(),
+        blank=True,
+        null=True,
+    )
     def __str__(self) -> str:
         return self.username
 
