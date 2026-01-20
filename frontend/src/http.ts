@@ -18,8 +18,8 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
   // Attach CSRF token for unsafe methods when available.
   if (!CSRF_SAFE_METHODS.includes(method)) {
     const token = getCookie("csrftoken");
-    if (token && !headers.has("X-CSRF-Token")) {
-      headers.set("X-CSRF-Token", token);
+    if (token && !headers.has("X-CSRFToken")) {
+      headers.set("X-CSRFToken", token);
     }
   }
 
