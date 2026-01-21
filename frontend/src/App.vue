@@ -52,11 +52,16 @@ export default defineComponent({
   data() {
     return { loggingOut: false, authChecked: false, isAuthed: false };
   },
-  async created() {
-    const status = await fetchAuthStatus();
-    this.isAuthed = status.authenticated;
-    this.authChecked = true;
-  },
+   async created() {
+     try {
+       const status = await fetchAuthStatus();
+       this.isAuthed = status.authenticated;
+     } catch (error) {
+       this.isAuthed = false;
+     } finally {
+       this.authChecked = true;
+     }
+   },
   methods: {
     async logout() {
       this.loggingOut = true;
