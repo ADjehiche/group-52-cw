@@ -149,10 +149,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Media files (Uploaded content)
 # AWS S3 Configuration
-STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-
-# Media files (Uploaded content)
 USE_S3 = os.getenv("USE_S3", "False") == "True"
 
 if USE_S3:
