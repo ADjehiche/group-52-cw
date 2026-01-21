@@ -1,6 +1,11 @@
 <template>
     <div class="d-flex flex-column min-vh-100">
         <main class="container pt-4 flex-grow-1">
+            <div style="position:fixed;bottom:10px;right:10px;background:#0008;color:white;padding:8px;border-radius:8px;z-index:9999;">
+                checked: {{ authChecked }} |
+                authed: {{ isAuthed }} |
+                user: {{ auth?.user?.username ?? "none" }}
+            </div>
             <div>
                 <router-link
                     class=""
@@ -47,45 +52,35 @@
     </div>
 </template>
 
-
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, computed, ref } from "vue";
 import { RouterView } from "vue-router";
 import Footer from "./components/Footer.vue";
-import { apiFetch } from "@/http";
-import { fetchAuthStatus } from "@/auth";
+import { useAuthStore } from "@/stores/auth";
 
 export default defineComponent({
-    components: { RouterView, Footer },
-    data() {
-        return {
-            loggingOut: false,
-            authChecked: false,
-            isAuthed: false,
-        };
-    },
-    async created() {
-        const status = await fetchAuthStatus();
-        this.isAuthed = status.authenticated;
-        this.authChecked = true;
-    },
-    methods: {
-        async logout() {
-            this.loggingOut = true;
-            try {
-                await apiFetch("/api/logout/", {
-                    method: "POST",
-                });
-            } catch (err) {
-                // Ignore errors; still redirect to login.
-            } finally {
-                window.location.href = "/accounts/login/";
-            }
-        },
-    },
-});
+  components: { RouterView, Footer },
+  setup() {
+    const auth = useAuthStore();
+    const loggingOut = ref(false);
 
+    // hydrate once on app load
+    auth.ensureChecked();
+
+    const authChecked = computed(() => auth.checked);
+    const isAuthed = computed(() => auth.isAuthenticated);
+
+    const logout = async () => {
+      loggingOut.value = true;
+      await auth.logout();
+      window.location.href = "/accounts/login/";
+    };
+
+    return { auth, loggingOut, authChecked, isAuthed, logout };
+  },
+});
 </script>
+
 
 <style scoped>
 </style>

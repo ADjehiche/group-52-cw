@@ -1,7 +1,8 @@
 // Example of how to use Vue Router
 
 import { createRouter, createWebHistory } from 'vue-router'
-import { fetchAuthStatus } from "@/auth";
+import { pinia } from "@/pinia";
+import { useAuthStore } from "@/stores/auth";
 
 // 1. Define route components.
 // These can be imported from other files
@@ -25,20 +26,18 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, _from, next) => {
-    const requiresAuth = to.meta.requiresAuth === true;
-    if (!requiresAuth) {
-        return next();
-    }
+  const requiresAuth = to.meta.requiresAuth === true;
+  if (!requiresAuth) return next();
 
-    const status = await fetchAuthStatus();
-    if (status.authenticated) {
-        return next();
-    }
+  const auth = useAuthStore(pinia);
+  await auth.ensureChecked();
 
-    // Redirect to Django login with next param so user returns after login
-    const nextUrl = encodeURIComponent(to.fullPath);
-    window.location.href = `/accounts/login/?next=${nextUrl}`;
-    return next(false);
+  if (auth.isAuthenticated) return next();
+
+  const nextUrl = encodeURIComponent(to.fullPath);
+  window.location.href = `/accounts/login/?next=${nextUrl}`;
+  return next(false);
 });
+
 
 export default router
