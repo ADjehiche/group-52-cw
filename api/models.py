@@ -8,6 +8,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Max, Q
 from django.utils import timezone
+from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
     """
