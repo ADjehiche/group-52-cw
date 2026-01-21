@@ -3,14 +3,18 @@ from __future__ import annotations
 from decimal import Decimal, InvalidOperation
 
 from django.contrib.auth import login, logout
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, JsonResponse
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import parse_datetime, parse_date
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_http_methods, require_POST, require_GET
+from django.contrib.auth import get_user_model
+
+from .models import Item, Question, Answer,ItemImage
 from django.db import transaction
 from django.db.models import Case, IntegerField, Q, When
 
@@ -248,6 +252,105 @@ def auth_status(request: HttpRequest) -> JsonResponse:
             }
         )
     return JsonResponse({"authenticated": False, "user": None})
+
+def _profile_payload(request: HttpRequest) -> dict[str, Any]:
+    u = request.user
+
+    profile_url = None
+    try:
+        if getattr(u, "profile_image", None) and u.profile_image:
+            profile_url = u.profile_image.url 
+    except (ValueError, OSError) as exc:
+        profile_url = None
+
+    return {
+        "id": u.pk,
+        "username": u.username,
+        "email": u.email,
+        "date_of_birth": u.date_of_birth.isoformat() if getattr(u, "date_of_birth", None) else None,
+        "profile_image_url": profile_url,
+    }
+
+
+@login_required
+@require_http_methods(["GET", "PATCH", "POST"])
+def profile_api(request: HttpRequest) -> JsonResponse:
+    """
+    GET  /api/profile/        -> current profile
+    PATCH/POST /api/profile/  -> update email and/or date_of_birth (JSON)
+    """
+    if request.method == "GET":
+        return JsonResponse(_profile_payload(request), status=200)
+
+    try:
+        raw = request.body.decode("utf-8") if request.body else "{}"
+        payload = json.loads(raw)
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return JsonResponse({"errors": {"__all__": "Invalid JSON."}}, status=400)
+
+    user = request.user
+    errors: dict[str, str] = {}
+
+    # Email
+    if "email" in payload:
+        email = (payload.get("email") or "").strip().lower()
+        if not email:
+            errors["email"] = "Email is required."
+        elif User.objects.filter(email=email).exclude(pk=user.pk).exists():
+            errors["email"] = "This email is already in use."
+        else:
+            user.email = email
+
+    # Date of birth
+    if "date_of_birth" in payload:
+        dob_raw = (payload.get("date_of_birth") or "").strip()
+        if not dob_raw:
+            user.date_of_birth = None
+        else:
+            dob = parse_date(dob_raw)
+            if dob is None:
+                errors["date_of_birth"] = "Invalid date format. Use YYYY-MM-DD."
+            else:
+                user.date_of_birth = dob
+
+    if errors:
+        return JsonResponse({"errors": errors}, status=400)
+
+    try:
+        user.full_clean()
+        user.save()
+    except ValidationError as exc:
+        field_errors: dict[str, str] = {
+            field: (msgs[0] if msgs else "Invalid value.")
+            for field, msgs in exc.message_dict.items()
+        }
+        return JsonResponse({"errors": field_errors}, status=400)
+
+    return JsonResponse(_profile_payload(request), status=200)
+
+
+@login_required
+@require_POST
+def profile_image_api(request: HttpRequest) -> JsonResponse:
+    """POST /api/profile/image/ -> upload profile image (multipart/form-data)."""
+    image_file = request.FILES.get("profile_image")
+    if not image_file:
+        return JsonResponse({"errors": {"profile_image": "Please choose an image to upload."}}, status=400)
+
+    user = request.user
+    user.profile_image = image_file
+
+    try:
+        user.full_clean()
+        user.save()
+    except ValidationError as exc:
+        field_errors: dict[str, str] = {
+            field: (msgs[0] if msgs else "Invalid value.")
+            for field, msgs in exc.message_dict.items()
+        }
+        return JsonResponse({"errors": field_errors}, status=400)
+
+    return JsonResponse(_profile_payload(request), status=200)
 
 def api_questions(request: HttpRequest) -> JsonResponse:
     """Get a list of questions. For a specific user, pass the user_id as a query parameter."""

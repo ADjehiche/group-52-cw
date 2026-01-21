@@ -149,40 +149,48 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Media files (Uploaded content)
 # AWS S3 Configuration
-USE_S3 = os.getenv('USE_S3', 'False') == 'True'
+USE_S3 = os.getenv("USE_S3", "False") == "True"
 
 if USE_S3:
-    # AWS S3 settings
-    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
-    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'eu-west-2')
-    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-    AWS_S3_OBJECT_PARAMETERS = {
-        'CacheControl': 'max-age=86400',
-    }
+    from botocore.config import Config
 
+    AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
+
+    AWS_S3_REGION_NAME = "eu-west-2"
+    AWS_LOCATION = "media"
+
+    AWS_DEFAULT_ACL = None
     AWS_S3_FILE_OVERWRITE = False
+
     AWS_QUERYSTRING_AUTH = False
-    
-    # S3 media files storage
-    AWS_LOCATION = 'media'
+    AWS_QUERYSTRING_EXPIRE = 3600
+
+    # Avoid redirects (signature break) by using regional endpoint + path-style
+    AWS_S3_ENDPOINT_URL = f"https://s3.{AWS_S3_REGION_NAME}.amazonaws.com"
+
     STORAGES = {
         "default": {
             "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
             "OPTIONS": {
+                "bucket_name": AWS_STORAGE_BUCKET_NAME,
+                "region_name": AWS_S3_REGION_NAME,
                 "location": AWS_LOCATION,
+                "querystring_auth": False,
+                "endpoint_url": AWS_S3_ENDPOINT_URL,
             },
         },
         "staticfiles": {
-            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage" if not DEBUG else "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
-else:
-    # Local media files storage
+
+    # MEDIA_URL is not used for S3 FileField.url generation, but define harmlessly:
     MEDIA_URL = "/media/"
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+else:
+    MEDIA_URL = "/media/"
+    MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/stable/ref/settings/#default-auto-field

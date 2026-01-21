@@ -19,5 +19,7 @@ urlpatterns = [
     path("api/auth/status/", auth_status, name="auth_status"),
     path("items/", items_collection, name="items-collection"),
     path("items/<int:item_id>/", main_spa, name="spa-item-detail"),
+    path("api/profile/", views.profile_api, name="profile_api"),
+    path("api/profile/image/", views.profile_image_api, name="profile_image_api"),
     path("", main_spa, name="spa"),
 ]
