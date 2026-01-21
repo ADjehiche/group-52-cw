@@ -8,7 +8,6 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Max, Q
 from django.utils import timezone
-from .storage import PrivateMediaStorage
 
 from django.contrib.auth.models import AbstractUser
 
@@ -23,7 +22,6 @@ class User(AbstractUser):
     date_of_birth = models.DateField(blank=True, null=True)
     profile_image = models.ImageField(
         upload_to="profile_images/",
-        storage=PrivateMediaStorage(),
         blank=True,
         null=True,
     )

@@ -164,8 +164,7 @@ if USE_S3:
     AWS_DEFAULT_ACL = None
     AWS_S3_FILE_OVERWRITE = False
 
-    # Signed URLs (private objects)
-    AWS_QUERYSTRING_AUTH = True
+    AWS_QUERYSTRING_AUTH = False
     AWS_QUERYSTRING_EXPIRE = 3600
 
     # Avoid redirects (signature break) by using regional endpoint + path-style
@@ -182,7 +181,7 @@ if USE_S3:
                 "bucket_name": AWS_STORAGE_BUCKET_NAME,
                 "region_name": AWS_S3_REGION_NAME,
                 "location": AWS_LOCATION,
-                "querystring_auth": True,
+                "querystring_auth": False,
                 "endpoint_url": AWS_S3_ENDPOINT_URL,
                 "client_config": AWS_S3_CLIENT_CONFIG,
             },

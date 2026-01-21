@@ -33,11 +33,6 @@
           <span class="mx-1">|</span>
           <a class="text-decoration-none" href="/accounts/signup/">{{ $t('nav.signup') }}</a>
         </template>
-
-        <!-- Optional: while auth is being checked, show nothing or a tiny placeholder -->
-        <!-- <template v-else>
-          <span class="mx-1">|</span><span class="opacity-75">...</span>
-        </template> -->
       </nav>
     </header>
 
@@ -85,8 +80,8 @@ export default defineComponent({
 });
 </script>
 
-<!-- IMPORTANT: NOT scoped -->
-<style>
+
+<style scoped>
 html, body, #app {
   height: 100%;
 }
