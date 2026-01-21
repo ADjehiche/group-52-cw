@@ -13,8 +13,8 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
+from .models import Item, Question, Answer,ItemImage
 from django.db import transaction
-from .models import Item, ItemImage
 from .forms import SignUpForm
 
 def signup(request: HttpRequest) -> HttpResponse:
@@ -205,3 +205,147 @@ def auth_status(request: HttpRequest) -> JsonResponse:
         )
     return JsonResponse({"authenticated": False, "user": None})
 
+def api_questions(request: HttpRequest) -> JsonResponse:
+    """Get a list of questions. For a specific user, pass the user_id as a query parameter."""
+    user_id = request.GET.get("user_id")
+    if user_id:
+        questions = Question.objects.filter(author_id=user_id).select_related('item', 'author').order_by("-created_at")
+    else:
+        questions = Question.objects.all().select_related('item', 'author').order_by("-created_at")
+    return JsonResponse(
+        {
+            "questions": [
+                {
+                    "id": question.id,
+                    "content": question.content,
+                    "author": question.author.username,
+                    "created_at": question.created_at.isoformat(),
+                    "item_id": question.item_id,
+                    "item_title": question.item.title,
+                }
+                for question in questions
+            ]
+        },
+        status=200,
+    )
+
+
+def item_questions_list_or_create(request: HttpRequest, item_id: int) -> JsonResponse:
+    """
+    GET: List all questions for an item (public)
+    POST: Create a new question for an item (authenticated users only)
+    """
+    # Check if item exists
+    try:
+        item = Item.objects.get(pk=item_id)
+    except Item.DoesNotExist:
+        return JsonResponse({"detail": "Item not found."}, status=404)
+    
+    if request.method == "GET":
+        # Public - anyone can view questions
+        questions = Question.objects.filter(item=item).select_related("author", "answer")
+        return JsonResponse(
+            {
+                "questions": [
+                    {
+                        "id": q.id,
+                        "content": q.content,
+                        "author": q.author.username,
+                        "author_id": q.author_id,
+                        "created_at": q.created_at.isoformat(),
+                        "answer": {
+                            "content": q.answer.content,
+                            "created_at": q.answer.created_at.isoformat(),
+                        } if hasattr(q, "answer") else None,
+                    }
+                    for q in questions
+                ]
+            },
+            status=200,
+        )
+    
+    if request.method == "POST":
+        # Authentication required
+        if not request.user.is_authenticated:
+            return JsonResponse({"detail": "Authentication required."}, status=401)
+        
+        # Parse JSON body
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"errors": {"content": "Invalid JSON."}}, status=400)
+        
+        content = (data.get("content") or "").strip()
+        
+        if not content:
+            return JsonResponse({"errors": {"content": "Question content is required."}}, status=400)
+        
+        # Create the question
+        question = Question.objects.create(
+            item=item,
+            author=request.user,
+            content=content,
+        )
+        
+        return JsonResponse(
+            {
+                "id": question.id,
+                "content": question.content,
+                "author": question.author.username,
+                "author_id": question.author_id,
+                "created_at": question.created_at.isoformat(),
+                "answer": None,
+            },
+            status=201,
+        )
+    
+    return JsonResponse({"detail": "Method not allowed."}, status=405)
+
+
+def question_answer(request: HttpRequest, question_id: int) -> JsonResponse:
+    """
+    POST: Answer a question (item owner only)
+    """
+    if request.method != "POST":
+        return JsonResponse({"detail": "Method not allowed."}, status=405)
+    
+    # Authentication required
+    if not request.user.is_authenticated:
+        return JsonResponse({"detail": "Authentication required."}, status=401)
+    
+    # Check if question exists
+    try:
+        question = Question.objects.select_related("item").get(pk=question_id)
+    except Question.DoesNotExist:
+        return JsonResponse({"detail": "Question not found."}, status=404)
+    
+    # Permission check: only item owner can answer
+    if question.item.owner_id != request.user.pk:
+        return JsonResponse({"detail": "Only the item owner can answer this question."}, status=403)
+    
+    # Parse JSON body
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"errors": {"content": "Invalid JSON."}}, status=400)
+    
+    content = (data.get("content") or "").strip()
+    
+    if not content:
+        return JsonResponse({"errors": {"content": "Answer content is required."}}, status=400)
+    
+    # Create or update the answer
+    answer, created = Answer.objects.update_or_create(
+        question=question,
+        defaults={"content": content},
+    )
+    
+    return JsonResponse(
+        {
+            "id": answer.id,
+            "question_id": question.id,
+            "content": answer.content,
+            "created_at": answer.created_at.isoformat(),
+        },
+        status=201 if created else 200,
+    )

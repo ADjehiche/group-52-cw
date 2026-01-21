@@ -8,6 +8,39 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Max, Q
 from django.utils import timezone
+from django.contrib.auth.models import AbstractUser
+
+class User(AbstractUser):
+    """
+    Custom user model
+    - email: already present on AbstractUser; we enforce non-blank + unique
+    - date_of_birth: new
+    - profile_image: new
+    """
+    email = models.EmailField(unique=True)
+    date_of_birth = models.DateField(blank=True, null=True)
+    profile_image = models.ImageField(upload_to="profile_images/", blank=True, null=True)
+    
+    # Fix clash with auth.User
+    groups = models.ManyToManyField(
+        'auth.Group',
+        verbose_name='groups',
+        blank=True,
+        help_text='The groups this user belongs to.',
+        related_name='api_user_set',
+        related_query_name='api_user',
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        verbose_name='user permissions',
+        blank=True,
+        help_text='Specific permissions for this user.',
+        related_name='api_user_set',
+        related_query_name='api_user',
+    )
+
+    def __str__(self) -> str:
+        return self.username
 
 class PageView(models.Model):
     count = models.IntegerField(default=0)
@@ -17,34 +50,31 @@ class PageView(models.Model):
 
 
 class Question(models.Model):
-    title: str = models.CharField(max_length=200)
+    item = models.ForeignKey('Item', on_delete=models.CASCADE, related_name='questions')
     content: str = models.TextField()
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='questions')
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
-    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
-    likes: int = models.IntegerField(default=0)
 
     class Meta:
         ordering = ['-created_at']
 
     def __str__(self):
-        return self.title
+        preview = self.content[:50] + '...' if len(self.content) > 50 else self.content
+        return f"Question on {self.item.title}: {preview}"
 
 
 class Answer(models.Model):
-    question: Question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
+    question: Question = models.OneToOneField(Question, on_delete=models.CASCADE, related_name='answer')
     content: str = models.TextField()
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='answers')
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
-    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
-    votes: int = models.IntegerField(default=0)
-    is_accepted: bool = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ['-is_accepted', '-votes', '-created_at']
+        ordering = ['-created_at']
 
     def __str__(self):
-        return f"Answer to '{self.question.title}' by {self.author.username}" 
+        preview = self.question.content[:30] + '...' if len(self.question.content) > 30 else self.question.content
+        return f"Answer to '{preview}'" 
     
 class Item(models.Model):
     owner = models.ForeignKey(
