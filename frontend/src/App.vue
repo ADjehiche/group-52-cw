@@ -44,13 +44,11 @@
   </div>
 </template>
 
-
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, computed, ref } from "vue";
 import { RouterView } from "vue-router";
 import Footer from "./components/Footer.vue";
-import { apiFetch } from "@/http";
-import { fetchAuthStatus } from "@/auth";
+import { useAuthStore } from "@/stores/auth";
 
 export default defineComponent({
   components: { RouterView, Footer },
