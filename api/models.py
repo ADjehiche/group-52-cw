@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
@@ -52,7 +51,7 @@ class PageView(models.Model):
 class Question(models.Model):
     item = models.ForeignKey('Item', on_delete=models.CASCADE, related_name='questions')
     content: str = models.TextField()
-    author: User = models.ForeignKey(User, on_delete=models.CASCADE, related_name='questions')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='questions')
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -66,6 +65,7 @@ class Question(models.Model):
 class Answer(models.Model):
     question: Question = models.OneToOneField(Question, on_delete=models.CASCADE, related_name='answer')
     content: str = models.TextField()
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='answers')
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -88,7 +88,6 @@ class Item(models.Model):
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.00"))],
     )
-    image = models.ImageField(upload_to="items/", blank=True, null=True)
     ends_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -109,6 +108,35 @@ class Item(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+
+class ItemImage(models.Model):
+    """Model for storing multiple images per auction item (max 8)."""
+    item = models.ForeignKey(
+        Item,
+        on_delete=models.CASCADE,
+        related_name="images",
+    )
+    image = models.ImageField(upload_to="items/")
+    order = models.PositiveSmallIntegerField(default=0, help_text="Display order of the image")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+        verbose_name = "Item Image"
+        verbose_name_plural = "Item Images"
+
+    def clean(self) -> None:
+        super().clean()
+
+        # Limit to maximum 8 images per item
+        if self.item_id:
+            existing_count = ItemImage.objects.filter(item=self.item).exclude(pk=self.pk).count()
+            if existing_count >= 8:
+                raise ValidationError("An item can have a maximum of 8 images.")
+
+    def __str__(self) -> str:
+        return f"Image {self.order} for {self.item.title}"
 
 
 class Bid(models.Model):
