@@ -1,5 +1,15 @@
 <template>
   <div class="new-item-page">
+    <nav class="page-nav">
+      <div class="nav-links">
+        <RouterLink class="nav-link" to="/">Main</RouterLink>
+        <RouterLink class="nav-link" to="/other/">Other</RouterLink>
+        <RouterLink class="nav-link" to="/items/new/">Create Item</RouterLink>
+      </div>
+      <button type="button" class="nav-link nav-logout" @click="logoutUser">
+        Logout
+      </button>
+    </nav>
     <div class="auth-shell">
       <div class="brand">
         <h1>Create new item</h1>
@@ -291,6 +301,14 @@
           this.images.splice(index, 1);
         },
 
+        async logoutUser() {
+        try {
+          await apiFetch("/api/logout/", { method: "POST" });
+        } finally {
+          window.location.href = "/";
+        }
+        },
+
         async submit() {
         if (!this.validateClient()) return;
 
@@ -367,13 +385,60 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 96px 24px 24px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: linear-gradient(135deg, #1a1f2e 0%, #0f1419 100%);
   color: #ffffff;
   overflow-x: hidden;
   overflow-y: auto;
   z-index: 9999;
+}
+
+.page-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: #0f1419;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  z-index: 100000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.nav-links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #e5e7eb;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #ffffff;
+}
+
+.nav-logout {
+  cursor: pointer;
 }
 
 .new-item-page::before {

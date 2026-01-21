@@ -13,13 +13,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
-<<<<<<< HEAD
 from django.db import transaction
-
-
-
-=======
->>>>>>> 83dc4fcf40d4caceef6c0db22ed1a3ebf05d7348
 from .models import Item, ItemImage
 from .forms import SignUpForm
 

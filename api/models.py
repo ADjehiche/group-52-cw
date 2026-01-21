@@ -9,20 +9,6 @@ from django.db import models
 from django.db.models import Max, Q
 from django.utils import timezone
 
-class User(AbstractUser):
-    """
-    Custom user model
-    - email: already present on AbstractUser; we enforce non-blank + unique
-    - date_of_birth: new
-    - profile_image: new
-    """
-    email = models.EmailField(unique=True)
-    date_of_birth = models.DateField(blank=True, null=True)
-    profile_image = models.ImageField(upload_to="profile_images/", blank=True, null=True)
-
-    def __str__(self) -> str:
-        return self.username
-
 class PageView(models.Model):
     count = models.IntegerField(default=0)
 
@@ -33,7 +19,7 @@ class PageView(models.Model):
 class Question(models.Model):
     title: str = models.CharField(max_length=200)
     content: str = models.TextField()
-    author: User = models.ForeignKey(User, on_delete=models.CASCADE, related_name='questions')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='questions')
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
     likes: int = models.IntegerField(default=0)
@@ -48,7 +34,7 @@ class Question(models.Model):
 class Answer(models.Model):
     question: Question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
     content: str = models.TextField()
-    author: User = models.ForeignKey(User, on_delete=models.CASCADE, related_name='answers')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='answers')
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
     votes: int = models.IntegerField(default=0)
