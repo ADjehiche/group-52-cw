@@ -1,0 +1,23 @@
+{
+  "nav": {
+    "mainPage": "Main Page",
+    "otherPage": "Other Page",
+    "newItem": "New Item",
+    "login": "Login",
+    "signup": "Sign up",
+    "logout": "Logout",
+    "loggingOut": "Logging out..."
+  },
+  "pages": {
+    "main": {
+      "title": "Main Page"
+    },
+    "other": {
+      "title": "Other Page"
+    }
+  },
+  "footer": {
+    "language": "Language",
+    "selectLanguage": "Select Language"
+  }
+}

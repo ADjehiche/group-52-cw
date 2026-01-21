@@ -1,0 +1,23 @@
+{
+  "nav": {
+    "mainPage": "Página Principal",
+    "otherPage": "Otra Página",
+    "newItem": "Nuevo Artículo",
+    "login": "Iniciar Sesión",
+    "signup": "Registrarse",
+    "logout": "Cerrar Sesión",
+    "loggingOut": "Cerrando sesión..."
+  },
+  "pages": {
+    "main": {
+      "title": "Página Principal"
+    },
+    "other": {
+      "title": "Otra Página"
+    }
+  },
+  "footer": {
+    "language": "Idioma",
+    "selectLanguage": "Seleccionar Idioma"
+  }
+}

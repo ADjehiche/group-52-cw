@@ -43,15 +43,17 @@
     <div v-else>
       <ul class="items" v-if="items.length">
         <li v-for="item in items" :key="item.id" class="item-card">
-          <div class="item-head">
-            <h3 class="item-title">{{ item.title }}</h3>
-            <span class="price">£{{ item.starting_price }}</span>
-          </div>
-          <p class="description">{{ item.description || 'No description provided.' }}</p>
-          <div class="meta">
-            <span>Ends: {{ formatDate(item.ends_at) }}</span>
-            <span class="dot" aria-hidden="true">•</span>
-            <span>ID {{ item.id }}</span>
+          <div class="card-link">
+            <div class="item-head">
+              <h3 class="item-title">{{ item.title }}</h3>
+              <span class="price">£{{ item.starting_price }}</span>
+            </div>
+            <p class="description">{{ item.description || 'No description provided.' }}</p>
+            <div class="meta">
+              <span>Ends: {{ formatDate(item.ends_at) }}</span>
+              <span class="dot" aria-hidden="true">•</span>
+              <span>ID {{ item.id }}</span>
+            </div>
           </div>
         </li>
       </ul>
@@ -86,7 +88,7 @@ export default defineComponent({
     return {
       query: "",
       items: [],
-      loading: false,
+      loading: true,
       error: "",
       debounceHandle: null,
       sort: "ending-soon",
@@ -95,29 +97,26 @@ export default defineComponent({
   mounted() {
     this.fetchItems();
   },
+  beforeUnmount() {
+    if (this.debounceHandle) {
+      clearTimeout(this.debounceHandle);
+      this.debounceHandle = null;
+    }
+  },
   methods: {
     onQueryInput() {
       if (this.debounceHandle) {
         clearTimeout(this.debounceHandle);
-        this.debounceHandle = null;
       }
       this.debounceHandle = window.setTimeout(() => {
         this.fetchItems();
       }, 300);
     },
     onSortChange() {
-      if (this.debounceHandle) {
-        clearTimeout(this.debounceHandle);
-        this.debounceHandle = null;
-      }
       this.fetchItems();
     },
     clearQuery() {
       this.query = "";
-      if (this.debounceHandle) {
-        clearTimeout(this.debounceHandle);
-        this.debounceHandle = null;
-      }
       this.fetchItems();
     },
     async fetchItems() {
@@ -132,7 +131,7 @@ export default defineComponent({
       }
       const queryString = params.toString();
       try {
-        const response = await fetch(`/api/items/${queryString ? `?${queryString}` : ""}` , {
+        const response = await fetch(`/api/items/${queryString ? `?${queryString}` : ""}`, {
           credentials: "include",
         });
         if (!response.ok) {
