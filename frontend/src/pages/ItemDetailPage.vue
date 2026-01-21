@@ -29,7 +29,8 @@
       </dl>
 
       <div class="d-flex gap-2 align-items-center">
-        <a class="btn btn-primary" href="/accounts/login/">Login to bid</a>
+        <a v-if="!isAuthenticated" class="btn btn-primary" href="/accounts/login/">Login to bid</a>
+        <button v-else class="btn btn-primary" type="button" disabled>Bid feature coming soon</button>
         <a class="btn btn-outline-secondary" href="#qa">Go to Q&A</a>
       </div>
     </div>
@@ -44,6 +45,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { fetchItemDetail, ItemDetail } from "../api";
+import { fetchAuthStatus } from "../auth";
 
 export default defineComponent({
   name: "ItemDetailPage",
@@ -54,6 +56,7 @@ export default defineComponent({
       error: "",
       remainingSeconds: 0,
       tickHandle: null as number | null,
+      isAuthenticated: false,
     };
   },
   async created() {
@@ -90,6 +93,12 @@ export default defineComponent({
     async load() {
       this.loading = true;
       this.error = "";
+      try {
+        const status = await fetchAuthStatus();
+        this.isAuthenticated = status.authenticated;
+      } catch {
+        this.isAuthenticated = false;
+      }
       const id = Number(this.$route.params.id);
       if (!Number.isInteger(id) || id <= 0) {
         this.error = "Invalid item id.";

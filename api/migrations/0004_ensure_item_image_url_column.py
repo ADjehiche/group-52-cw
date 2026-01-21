@@ -19,7 +19,7 @@ def add_image_url_column(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0003_bid_bid_amount_gt_0_item_item_starting_price_gte_0"),
+        ("api", "0003_item_bid_state"),
     ]
 
     operations = [
