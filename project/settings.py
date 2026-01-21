@@ -169,10 +169,6 @@ if USE_S3:
 
     # Avoid redirects (signature break) by using regional endpoint + path-style
     AWS_S3_ENDPOINT_URL = f"https://s3.{AWS_S3_REGION_NAME}.amazonaws.com"
-    AWS_S3_CLIENT_CONFIG = Config(
-        signature_version="s3v4",
-        s3={"addressing_style": "path"},
-    )
 
     STORAGES = {
         "default": {
@@ -183,7 +179,6 @@ if USE_S3:
                 "location": AWS_LOCATION,
                 "querystring_auth": False,
                 "endpoint_url": AWS_S3_ENDPOINT_URL,
-                "client_config": AWS_S3_CLIENT_CONFIG,
             },
         },
         "staticfiles": {
