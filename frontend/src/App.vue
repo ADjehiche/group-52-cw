@@ -1,11 +1,6 @@
 <template>
     <div class="d-flex flex-column min-vh-100">
         <main class="container pt-4 flex-grow-1">
-            <div style="position:fixed;bottom:10px;right:10px;background:#0008;color:white;padding:8px;border-radius:8px;z-index:9999;">
-                checked: {{ authChecked }} |
-                authed: {{ isAuthed }} |
-                user: {{ auth?.user?.username ?? "none" }}
-            </div>
             <div>
                 <router-link
                     class=""
