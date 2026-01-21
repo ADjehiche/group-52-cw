@@ -5,33 +5,42 @@
         <router-link :to="{ name: 'Main Page' }">{{ $t('nav.mainPage') }}</router-link>
         |
         <router-link :to="{ name: 'Other Page' }">{{ $t('nav.otherPage') }}</router-link>
-        |
-        <router-link :to="{ name: 'New Item' }">{{ $t('nav.newItem') }}</router-link>
-        |
-        <router-link :to="{ name: 'Profile' }">{{ $t('nav.profile') }}</router-link>
 
-        <template v-if="authChecked">
+        <!-- Auth-dependent links -->
+        <template v-if="authChecked && isAuthed">
           <span class="mx-1">|</span>
-          <template v-if="isAuthed">
-            <button
-              class="btn btn-link p-0 align-baseline"
-              type="button"
-              @click="logout"
-              :disabled="loggingOut"
-            >
-              {{ loggingOut ? $t('nav.loggingOut') : $t('nav.logout') }}
-            </button>
-          </template>
-          <template v-else>
-            <a class="text-decoration-none" href="/accounts/login/">{{ $t('nav.login') }}</a>
-            <span class="mx-1">|</span>
-            <a class="text-decoration-none" href="/accounts/signup/">{{ $t('nav.signup') }}</a>
-          </template>
+
+          <router-link :to="{ name: 'New Item' }">{{ $t('nav.newItem') }}</router-link>
+          <span class="mx-1">|</span>
+
+          <router-link :to="{ name: 'Profile' }">{{ $t('nav.profile') }}</router-link>
+          <span class="mx-1">|</span>
+
+          <button
+            class="btn btn-link p-0 align-baseline"
+            type="button"
+            @click="logout"
+            :disabled="loggingOut"
+          >
+            {{ loggingOut ? $t('nav.loggingOut') : $t('nav.logout') }}
+          </button>
         </template>
+
+        <!-- Auth checked but not authed -->
+        <template v-else-if="authChecked">
+          <span class="mx-1">|</span>
+          <a class="text-decoration-none" href="/accounts/login/">{{ $t('nav.login') }}</a>
+          <span class="mx-1">|</span>
+          <a class="text-decoration-none" href="/accounts/signup/">{{ $t('nav.signup') }}</a>
+        </template>
+
+        <!-- Optional: while auth is being checked, show nothing or a tiny placeholder -->
+        <!-- <template v-else>
+          <span class="mx-1">|</span><span class="opacity-75">...</span>
+        </template> -->
       </nav>
     </header>
 
-    <!-- RouterView is now full-width/full-height area -->
     <main class="flex-grow-1 d-flex">
       <RouterView class="flex-grow-1" />
     </main>
@@ -39,6 +48,7 @@
     <Footer />
   </div>
 </template>
+
 
 <script lang="ts">
 import { defineComponent } from "vue";

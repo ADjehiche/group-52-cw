@@ -216,8 +216,8 @@ def _profile_payload(request: HttpRequest) -> dict[str, Any]:
     profile_url = None
     try:
         if getattr(u, "profile_image", None) and u.profile_image:
-            profile_url = u.profile_image.url  # IMPORTANT: signed url
-    except Exception:
+            profile_url = u.profile_image.url 
+    except (ValueError, OSError) as exc:
         profile_url = None
 
     return {
