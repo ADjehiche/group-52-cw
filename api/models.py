@@ -2,27 +2,12 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Max, Q
 from django.utils import timezone
-
-class User(AbstractUser):
-    """
-    Custom user model
-    - email: already present on AbstractUser; we enforce non-blank + unique
-    - date_of_birth: new
-    - profile_image: new
-    """
-    email = models.EmailField(unique=True)
-    date_of_birth = models.DateField(blank=True, null=True)
-    profile_image = models.ImageField(upload_to="profile_images/", blank=True, null=True)
-
-    def __str__(self) -> str:
-        return self.username
 
 class PageView(models.Model):
     count = models.IntegerField(default=0)
@@ -34,7 +19,7 @@ class PageView(models.Model):
 class Question(models.Model):
     title: str = models.CharField(max_length=200)
     content: str = models.TextField()
-    author: User = models.ForeignKey(User, on_delete=models.CASCADE, related_name='questions')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='questions')
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
     likes: int = models.IntegerField(default=0)
@@ -49,7 +34,7 @@ class Question(models.Model):
 class Answer(models.Model):
     question: Question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
     content: str = models.TextField()
-    author: User = models.ForeignKey(User, on_delete=models.CASCADE, related_name='answers')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='answers')
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
     votes: int = models.IntegerField(default=0)
@@ -74,7 +59,6 @@ class Item(models.Model):
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.00"))],
     )
-    image = models.ImageField(upload_to="items/", blank=True, null=True)
     ends_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -95,6 +79,35 @@ class Item(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+
+class ItemImage(models.Model):
+    """Model for storing multiple images per auction item (max 8)."""
+    item = models.ForeignKey(
+        Item,
+        on_delete=models.CASCADE,
+        related_name="images",
+    )
+    image = models.ImageField(upload_to="items/")
+    order = models.PositiveSmallIntegerField(default=0, help_text="Display order of the image")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+        verbose_name = "Item Image"
+        verbose_name_plural = "Item Images"
+
+    def clean(self) -> None:
+        super().clean()
+
+        # Limit to maximum 8 images per item
+        if self.item_id:
+            existing_count = ItemImage.objects.filter(item=self.item).exclude(pk=self.pk).count()
+            if existing_count >= 8:
+                raise ValidationError("An item can have a maximum of 8 images.")
+
+    def __str__(self) -> str:
+        return f"Image {self.order} for {self.item.title}"
 
 
 class Bid(models.Model):

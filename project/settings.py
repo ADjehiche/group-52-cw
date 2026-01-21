@@ -161,7 +161,7 @@ if USE_S3:
     AWS_S3_OBJECT_PARAMETERS = {
         'CacheControl': 'max-age=86400',
     }
-    AWS_DEFAULT_ACL = 'public-read'
+
     AWS_S3_FILE_OVERWRITE = False
     AWS_QUERYSTRING_AUTH = False
     
@@ -189,8 +189,6 @@ else:
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Custom User Model
-AUTH_USER_MODEL = 'api.User'
 
 if DEBUG:
     STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
