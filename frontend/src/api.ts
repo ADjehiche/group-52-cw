@@ -11,8 +11,8 @@ export type ItemDetail = {
   image_url: string;
   ends_at: string;
   owner_id: number;
-  highest_bid: HighestBid;
-  time_remaining_seconds: number;
+  highest_bid?: HighestBid;
+  time_remaining_seconds?: number;
 };
 
 async function handleResponse(response: Response) {

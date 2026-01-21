@@ -17,7 +17,7 @@
 
         <dt class="col-sm-4">Highest bid</dt>
         <dd class="col-sm-8">
-          <span v-if="item.highest_bid.amount">£{{ item.highest_bid.amount }}</span>
+          <span v-if="item.highest_bid?.amount">£{{ item.highest_bid.amount }}</span>
           <span v-else class="text-muted">No bids yet</span>
         </dd>
 
@@ -98,7 +98,7 @@ export default defineComponent({
       }
       try {
         this.item = await fetchItemDetail(id);
-        this.remainingSeconds = this.item.time_remaining_seconds;
+        this.remainingSeconds = this.item.time_remaining_seconds ?? 0;
         this.startTick();
       } catch (err: unknown) {
         this.error = err instanceof Error ? err.message : "Failed to load item.";
