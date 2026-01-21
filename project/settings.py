@@ -80,7 +80,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'project.wsgi.application'
 
-
+AUTH_USER_MODEL = 'api.User'
 # Database
 # https://docs.djangoproject.com/en/stable/ref/settings/#databases
 
@@ -203,8 +203,6 @@ else:
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Custom User Model
-AUTH_USER_MODEL = 'api.User'
 
 if DEBUG:
     STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"

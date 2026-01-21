@@ -22,6 +22,8 @@ from .views import main_spa
 
 urlpatterns = [
     path("api/items/", views.items_collection, name="items_collection"),
+    path("api/items/<int:item_id>/questions/", views.item_questions_list_or_create, name="item_questions"),
+    path("api/questions/<int:question_id>/answer/", views.question_answer, name="question_answer"),
     path("api/logout/", views.api_logout, name="api_logout"),
     path("api/auth/status/", views.auth_status, name="auth_status"),
     path("api/profile/", views.profile_api, name="profile_api"),

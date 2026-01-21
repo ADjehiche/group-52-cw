@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
@@ -11,6 +10,7 @@ from django.db.models import Max, Q
 from django.utils import timezone
 from .storage import PrivateMediaStorage
 
+from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
     """
@@ -27,6 +27,25 @@ class User(AbstractUser):
         blank=True,
         null=True,
     )
+    
+    # Fix clash with auth.User
+    groups = models.ManyToManyField(
+        'auth.Group',
+        verbose_name='groups',
+        blank=True,
+        help_text='The groups this user belongs to.',
+        related_name='api_user_set',
+        related_query_name='api_user',
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        verbose_name='user permissions',
+        blank=True,
+        help_text='Specific permissions for this user.',
+        related_name='api_user_set',
+        related_query_name='api_user',
+    )
+
     def __str__(self) -> str:
         return self.username
 
@@ -38,34 +57,31 @@ class PageView(models.Model):
 
 
 class Question(models.Model):
-    title: str = models.CharField(max_length=200)
+    item = models.ForeignKey('Item', on_delete=models.CASCADE, related_name='questions')
     content: str = models.TextField()
-    author: User = models.ForeignKey(User, on_delete=models.CASCADE, related_name='questions')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='questions')
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
-    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
-    likes: int = models.IntegerField(default=0)
 
     class Meta:
         ordering = ['-created_at']
 
     def __str__(self):
-        return self.title
+        preview = self.content[:50] + '...' if len(self.content) > 50 else self.content
+        return f"Question on {self.item.title}: {preview}"
 
 
 class Answer(models.Model):
-    question: Question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
+    question: Question = models.OneToOneField(Question, on_delete=models.CASCADE, related_name='answer')
     content: str = models.TextField()
-    author: User = models.ForeignKey(User, on_delete=models.CASCADE, related_name='answers')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='answers')
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
-    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
-    votes: int = models.IntegerField(default=0)
-    is_accepted: bool = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ['-is_accepted', '-votes', '-created_at']
+        ordering = ['-created_at']
 
     def __str__(self):
-        return f"Answer to '{self.question.title}' by {self.author.username}" 
+        preview = self.question.content[:30] + '...' if len(self.question.content) > 30 else self.question.content
+        return f"Answer to '{preview}'" 
     
 class Item(models.Model):
     owner = models.ForeignKey(
@@ -80,7 +96,6 @@ class Item(models.Model):
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.00"))],
     )
-    image = models.ImageField(upload_to="items/", blank=True, null=True)
     ends_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -101,6 +116,35 @@ class Item(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+
+class ItemImage(models.Model):
+    """Model for storing multiple images per auction item (max 8)."""
+    item = models.ForeignKey(
+        Item,
+        on_delete=models.CASCADE,
+        related_name="images",
+    )
+    image = models.ImageField(upload_to="items/")
+    order = models.PositiveSmallIntegerField(default=0, help_text="Display order of the image")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+        verbose_name = "Item Image"
+        verbose_name_plural = "Item Images"
+
+    def clean(self) -> None:
+        super().clean()
+
+        # Limit to maximum 8 images per item
+        if self.item_id:
+            existing_count = ItemImage.objects.filter(item=self.item).exclude(pk=self.pk).count()
+            if existing_count >= 8:
+                raise ValidationError("An item can have a maximum of 8 images.")
+
+    def __str__(self) -> str:
+        return f"Image {self.order} for {self.item.title}"
 
 
 class Bid(models.Model):

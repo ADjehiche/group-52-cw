@@ -1,5 +1,15 @@
 <template>
   <div class="new-item-page">
+    <nav class="page-nav">
+      <div class="nav-links">
+        <RouterLink class="nav-link" to="/">Main</RouterLink>
+        <RouterLink class="nav-link" to="/other/">Other</RouterLink>
+        <RouterLink class="nav-link" to="/items/new/">Create Item</RouterLink>
+      </div>
+      <button type="button" class="nav-link nav-logout" @click="logoutUser">
+        Logout
+      </button>
+    </nav>
     <div class="auth-shell">
       <div class="brand">
         <h1>Create new item</h1>
@@ -79,12 +89,12 @@
           </div>
         </div>
 
-        <!-- Image Upload (Drag & Drop) -->
+        <!-- Multiple Image Upload (Drag & Drop) -->
         <div>
-          <label>Image (optional)</label>
+          <label>Images (up to 8)</label>
           <div
             class="upload-zone"
-            :class="{ 'drag-over': isDragging, 'has-image': imagePreview }"
+            :class="{ 'drag-over': isDragging, 'has-image': images.length }"
             @drop.prevent="handleDrop"
             @dragover.prevent="isDragging = true"
             @dragleave.prevent="isDragging = false"
@@ -94,37 +104,47 @@
               ref="fileInput"
               type="file"
               accept="image/*"
+              multiple
               @change="handleFileSelect"
               style="display: none"
             />
             
-            <div v-if="!imagePreview" class="upload-placeholder">
+            <div v-if="!images.length" class="upload-placeholder">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                 <circle cx="8.5" cy="8.5" r="1.5"></circle>
                 <polyline points="21 15 16 10 5 21"></polyline>
               </svg>
               <p>Click to upload or drag and drop</p>
-              <span class="upload-hint">PNG, JPG, GIF up to 10MB</span>
+              <span class="upload-hint">PNG, JPG, GIF up to 10MB each (max 8)</span>
             </div>
             
             <div v-else class="image-preview-container">
-              <img :src="imagePreview" alt="Preview" class="image-preview" />
-              <button
-                type="button"
-                class="remove-image"
-                @click.stop="removeImage"
-                title="Remove image"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
+              <div class="image-preview-grid">
+                <div
+                  v-for="(image, index) in images"
+                  :key="image.id"
+                  class="image-preview-item"
+                >
+                  <img :src="image.preview" alt="Preview" class="image-preview" />
+                  <button
+                    type="button"
+                    class="remove-image"
+                    @click.stop="removeImage(index)"
+                    title="Remove image"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <span class="upload-hint">{{ images.length }} / 8 selected</span>
             </div>
           </div>
-          <div v-if="errors.image" class="error-text">
-            {{ errors.image }}
+          <div v-if="errors.image || errors.images" class="error-text">
+            {{ errors.image || errors.images }}
           </div>
         </div>
 
@@ -149,6 +169,12 @@
     ends_at: string; // datetime-local string
     };
 
+    type ImageEntry = {
+    id: number;
+    file: File;
+    preview: string;
+    };
+
     export default defineComponent({
     name: "NewItemPage",
     data() {
@@ -158,8 +184,8 @@
         generalError: "",
         errors: {} as Record<string, string>,
         isDragging: false,
-        imageFile: null as File | null,
-        imagePreview: "" as string,
+        images: [] as ImageEntry[],
+        nextImageId: 1,
         form: {
             title: "",
             description: "",
@@ -208,44 +234,79 @@
 
         handleFileSelect(event: Event) {
             const target = event.target as HTMLInputElement;
-            const file = target.files?.[0];
-            if (file) {
-                this.setImageFile(file);
-            }
+          const files = target.files;
+          if (files && files.length) {
+            this.addImages(files);
+          }
+          if (target) target.value = "";
         },
 
         handleDrop(event: DragEvent) {
             this.isDragging = false;
-            const file = event.dataTransfer?.files[0];
-            if (file && file.type.startsWith('image/')) {
-                this.setImageFile(file);
-            }
+          const files = event.dataTransfer?.files;
+          if (files && files.length) {
+            this.addImages(files);
+          }
         },
 
-        setImageFile(file: File) {
-            // Validate file size (10MB max)
-            if (file.size > 10 * 1024 * 1024) {
-                this.errors.image = "Image must be less than 10MB.";
-                return;
+        addImages(files: FileList | File[]) {
+          const maxImages = 8;
+          const incoming = Array.from(files);
+          const newErrors: string[] = [];
+          let skipped = 0;
+
+          for (const file of incoming) {
+            if (this.images.length >= maxImages) {
+              newErrors.push("Maximum 8 images allowed.");
+              skipped += 1;
+              continue;
             }
 
-            this.imageFile = file;
-            this.errors.image = "";
+            if (!file.type.startsWith("image/")) {
+              newErrors.push(`${file.name}: only image files are allowed.`);
+              skipped += 1;
+              continue;
+            }
 
-            // Create preview
+            if (file.size > 10 * 1024 * 1024) {
+              newErrors.push(`${file.name}: must be less than 10MB.`);
+              skipped += 1;
+              continue;
+            }
+
+            const entry: ImageEntry = {
+              id: this.nextImageId,
+              file,
+              preview: "",
+            };
+            this.nextImageId += 1;
+            this.images.push(entry);
+
             const reader = new FileReader();
             reader.onload = (e) => {
-                this.imagePreview = e.target?.result as string;
+              entry.preview = (e.target?.result as string) || "";
             };
             reader.readAsDataURL(file);
+          }
+
+          if (newErrors.length) {
+            const summary = skipped === 1 ? "Skipped 1 file." : `Skipped ${skipped} files.`;
+            this.errors.images = `${summary} ${newErrors.join(" ")}`.trim();
+          } else {
+            this.errors.images = "";
+          }
         },
 
-        removeImage() {
-            this.imageFile = null;
-            this.imagePreview = "";
-            this.errors.image = "";
-            const input = this.$refs.fileInput as HTMLInputElement;
-            if (input) input.value = "";
+        removeImage(index: number) {
+          this.images.splice(index, 1);
+        },
+
+        async logoutUser() {
+        try {
+          await apiFetch("/api/logout/", { method: "POST" });
+        } finally {
+          window.location.href = "/";
+        }
         },
 
         async submit() {
@@ -263,8 +324,8 @@
             formData.append("starting_price", this.form.starting_price.trim());
             formData.append("ends_at", this.form.ends_at);
             
-            if (this.imageFile) {
-                formData.append("image", this.imageFile);
+            if (this.images.length) {
+              this.images.forEach((image) => formData.append("images", image.file));
             }
 
             const resp = await apiFetch("/api/items/", {
@@ -282,7 +343,8 @@
                 starting_price: "",
                 ends_at: "",
             };
-            this.removeImage();
+            this.images = [];
+            this.nextImageId = 1;
             this.errors = {};
             return;
             }
@@ -323,13 +385,60 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 96px 24px 24px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: linear-gradient(135deg, #1a1f2e 0%, #0f1419 100%);
   color: #ffffff;
   overflow-x: hidden;
   overflow-y: auto;
   z-index: 9999;
+}
+
+.page-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: #0f1419;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  z-index: 100000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.nav-links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #e5e7eb;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #ffffff;
+}
+
+.nav-logout {
+  cursor: pointer;
 }
 
 .new-item-page::before {
@@ -346,7 +455,7 @@
 }
 
 .auth-shell {
-  width: min(640px, 100%);
+  width: min(740px, 100%);
   background: #1a1f2e;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
@@ -500,60 +609,72 @@ button[type="submit"]:disabled {
   line-height: 1.4;
 }
 
-.upload-zone {
-  border: 2px dashed rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.02);
+/* Multi-image grid styles */
+.images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.image-slot {
+  aspect-ratio: 1;
   border-radius: 12px;
-  padding: 32px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  overflow: hidden;
   position: relative;
-  min-height: 200px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.image-slot.has-image {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.image-slot.upload-slot {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.upload-zone:hover {
-  border-color: rgba(245, 158, 11, 0.4);
+.image-slot.upload-slot:hover {
+  border-color: rgba(245, 158, 11, 0.6);
   background: rgba(255, 255, 255, 0.04);
-}
-
-.upload-zone.drag-over {
-  border-color: #f59e0b;
-  background: rgba(245, 158, 11, 0.1);
   transform: scale(1.02);
 }
 
-.upload-zone.has-image {
-  padding: 0;
-  border-style: solid;
-  border-color: rgba(255, 255, 255, 0.1);
+.image-slot.upload-slot.drag-over {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  transform: scale(1.05);
 }
 
 .upload-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
   color: #8b95a8;
+  padding: 12px;
 }
 
 .upload-placeholder svg {
-  opacity: 0.5;
+  opacity: 0.6;
   color: #f59e0b;
 }
 
 .upload-placeholder p {
   margin: 0;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 500;
   color: #ffffff;
 }
 
 .upload-hint {
-  font-size: 13px;
+  font-size: 11px;
   color: #8b95a8;
 }
 
@@ -562,6 +683,22 @@ button[type="submit"]:disabled {
   width: 100%;
   height: 100%;
   min-height: 200px;
+}
+
+.image-preview-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.image-preview-item {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 6px;
 }
 
 .image-preview {
@@ -578,9 +715,9 @@ button[type="submit"]:disabled {
   right: 12px;
   background: rgba(239, 68, 68, 0.9);
   border: none;
-  border-radius: 8px;
-  width: 36px;
-  height: 36px;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -588,6 +725,7 @@ button[type="submit"]:disabled {
   transition: all 0.2s ease;
   color: #ffffff;
   backdrop-filter: blur(8px);
+  z-index: 2;
 }
 
 .remove-image:hover {
@@ -599,10 +737,27 @@ button[type="submit"]:disabled {
   stroke-width: 3;
 }
 
+.image-number {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .form-row {
     grid-template-columns: 1fr;
+  }
+  
+  .images-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
 }
 
@@ -614,5 +769,11 @@ button[type="submit"]:disabled {
   h1 {
     font-size: 24px;
   }
+  
+  .images-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
+  }
 }
+
 </style>
