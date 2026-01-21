@@ -1,49 +1,52 @@
 <template>
-  <div class="container py-4" style="max-width: 720px;">
-    <h1 class="h3 mb-4">Profile</h1>
-
-    <div v-if="loading" class="text-muted">Loading...</div>
-
-    <div v-else>
-      <div v-if="globalError" class="alert alert-danger" role="alert">
-        {{ globalError }}
-      </div>
-      <div v-if="successMsg" class="alert alert-success" role="alert">
-        {{ successMsg }}
+  <div class="auth-shell">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1 class="auth-title">Profile</h1>
+        <p class="auth-subtitle">Manage your details and profile image.</p>
       </div>
 
-      <!-- Image -->
-      <div class="card mb-4">
-        <div class="card-body">
-          <h2 class="h5 mb-3">Profile image</h2>
+      <div v-if="loading" class="auth-muted">Loading...</div>
 
-          <div class="d-flex align-items-center gap-3 flex-wrap">
-            <div
-              class="border rounded d-flex align-items-center justify-content-center"
-              style="width: 96px; height: 96px; overflow: hidden;"
-            >
+      <div v-else>
+        <div v-if="globalError" class="auth-alert auth-alert--error" role="alert">
+          {{ globalError }}
+        </div>
+        <div v-if="successMsg" class="auth-alert auth-alert--success" role="alert">
+          {{ successMsg }}
+        </div>
+
+        <!-- Image -->
+        <div class="section">
+          <div class="section-head">
+            <h2 class="section-title">Profile image</h2>
+          </div>
+
+          <div class="image-row">
+            <div class="avatar">
               <img
                 v-if="currentImageSrc"
                 :src="currentImageSrc"
                 alt="Profile"
-                style="width: 100%; height: 100%; object-fit: cover;"
+                class="avatar-img"
               />
-              <span v-else class="text-muted small">No image</span>
+              <span v-else class="auth-muted small">No image</span>
             </div>
 
-            <div class="flex-grow-1">
+            <div class="image-controls">
               <input
-                class="form-control"
+                class="auth-input"
                 type="file"
                 accept="image/*"
                 @change="onFileChange"
               />
-              <div v-if="errors.profile_image" class="text-danger small mt-1">
+
+              <div v-if="errors.profile_image" class="auth-error">
                 {{ errors.profile_image }}
               </div>
 
               <button
-                class="btn btn-primary mt-2"
+                class="btn-primary"
                 type="button"
                 :disabled="uploading || !imageFile"
                 @click="uploadImage"
@@ -53,44 +56,44 @@
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Details -->
-      <div class="card">
-        <div class="card-body">
-          <h2 class="h5 mb-3">Details</h2>
-
-          <div class="mb-3">
-            <label class="form-label">Username</label>
-            <input class="form-control" type="text" :value="profile?.username" disabled />
+        <!-- Details -->
+        <div class="section">
+          <div class="section-head">
+            <h2 class="section-title">Details</h2>
           </div>
 
-          <div class="mb-3">
-            <label class="form-label">Email</label>
+          <div class="field">
+            <label class="auth-label">Username</label>
+            <input class="auth-input" type="text" :value="profile?.username" disabled />
+          </div>
+
+          <div class="field">
+            <label class="auth-label">Email</label>
             <input
-              class="form-control"
+              class="auth-input"
               type="email"
               v-model="form.email"
-              :class="{ 'is-invalid': !!errors.email }"
+              :class="{ 'auth-input--invalid': !!errors.email }"
             />
-            <div v-if="errors.email" class="invalid-feedback">{{ errors.email }}</div>
+            <div v-if="errors.email" class="auth-error">{{ errors.email }}</div>
           </div>
 
-          <div class="mb-3">
-            <label class="form-label">Date of birth</label>
+          <div class="field">
+            <label class="auth-label">Date of birth</label>
             <input
-              class="form-control"
+              class="auth-input"
               type="date"
               v-model="form.date_of_birth"
-              :class="{ 'is-invalid': !!errors.date_of_birth }"
+              :class="{ 'auth-input--invalid': !!errors.date_of_birth }"
             />
-            <div v-if="errors.date_of_birth" class="invalid-feedback">
+            <div v-if="errors.date_of_birth" class="auth-error">
               {{ errors.date_of_birth }}
             </div>
           </div>
 
           <button
-            class="btn btn-success"
+            class="btn-primary"
             type="button"
             :disabled="saving"
             @click="saveProfile"
@@ -285,3 +288,200 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scoped>
+/* Page background like your login/signup */
+.auth-shell {
+  min-height: calc(100vh - 60px);
+  display: grid;
+  place-items: center;
+  padding: 48px 16px;
+  background:
+    radial-gradient(1200px 600px at 20% 10%, rgba(255, 164, 0, 0.12), transparent 55%),
+    radial-gradient(900px 500px at 80% 20%, rgba(255, 164, 0, 0.10), transparent 60%),
+    linear-gradient(180deg, #0b1220 0%, #070b14 100%);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 760px;
+  background: rgba(17, 24, 39, 0.86);
+  border: 1px solid rgba(255, 164, 0, 0.18);
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 164, 0, 0.08) inset;
+  backdrop-filter: blur(10px);
+}
+
+.auth-header {
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.auth-title {
+  margin: 0;
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #f3f4f6;
+}
+
+.auth-subtitle {
+  margin: 8px 0 0;
+  color: rgba(243, 244, 246, 0.65);
+  font-size: 14px;
+}
+
+.auth-muted {
+  color: rgba(243, 244, 246, 0.65);
+}
+
+.section {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.section-head {
+  margin-bottom: 12px;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(243, 244, 246, 0.72);
+}
+
+.image-row {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 14px;
+  align-items: center;
+}
+
+@media (max-width: 560px) {
+  .image-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 14px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: rgba(2, 6, 23, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-controls {
+  display: grid;
+  gap: 10px;
+}
+
+.field {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.auth-label {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(243, 244, 246, 0.70);
+}
+
+.auth-input {
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 12px;
+  background: rgba(2, 6, 23, 0.40);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: #f3f4f6;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-input:focus {
+  border-color: rgba(255, 164, 0, 0.55);
+  box-shadow: 0 0 0 4px rgba(255, 164, 0, 0.12);
+}
+
+.auth-input:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.auth-input--invalid {
+  border-color: rgba(239, 68, 68, 0.7);
+}
+
+.btn-primary {
+  margin-top: 6px;
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #0b1220;
+  background: linear-gradient(180deg, #ffb020 0%, #f59e0b 100%);
+  box-shadow: 0 10px 28px rgba(245, 158, 11, 0.22);
+  cursor: pointer;
+  transition: transform 0.08s ease, filter 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.02);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.auth-error {
+  font-size: 12px;
+  color: rgba(248, 113, 113, 0.95);
+}
+
+.auth-alert {
+  padding: 10px 12px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  border: 1px solid transparent;
+  font-size: 14px;
+}
+
+.auth-alert--error {
+  background: rgba(239, 68, 68, 0.10);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: rgba(248, 113, 113, 0.95);
+}
+
+.auth-alert--success {
+  background: rgba(34, 197, 94, 0.10);
+  border-color: rgba(34, 197, 94, 0.25);
+  color: rgba(134, 239, 172, 0.95);
+}
+</style>
