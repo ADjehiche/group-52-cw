@@ -1,109 +1,207 @@
 from __future__ import annotations
 
-from typing import Iterable
+import json
+from decimal import Decimal, InvalidOperation
+from typing import Any
 
-from django.db.models import Case, IntegerField, Q, When
-from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.contrib.auth import login, logout
+from django.core.exceptions import ValidationError
+from django.http import HttpRequest, JsonResponse
+from django.http import HttpResponse
+from django.shortcuts import redirect, render
 from django.utils import timezone
-from django.views.decorators.http import require_GET
+from django.utils.dateparse import parse_datetime
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_POST
+from django.db import transaction
+from .models import Item, ItemImage
+from .forms import SignUpForm
 
-from .models import Bid, Item
+def signup(request: HttpRequest) -> HttpResponse:
+    if request.method == "POST":
+        form = SignUpForm(request.POST, request.FILES)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect("/")
+    else:
+        form = SignUpForm()
 
-
-def _serialize_items(items: Iterable[Item]) -> list[dict[str, object]]:
-    """Serialize Item queryset into a simple JSON-safe list."""
-    return [
-        {
-            "id": item.id,
-            "title": item.title,
-            "description": item.description,
-            "starting_price": str(item.starting_price),
-            "image_url": item.image_url,
-            "ends_at": item.ends_at.isoformat(),
-            "owner_id": item.owner_id,
-        }
-        for item in items
-    ]
-
+    return render(request, "registration/signup.html", {"form": form})
 
 def items_collection(request: HttpRequest) -> JsonResponse:
     """
-    GET: return active items, optionally filtered by keyword in title/description.
-    Only items whose `ends_at` is in the future are returned (active auctions).
+    GET /api/items/
+    List all auction items with their images.
+    
+    POST /api/items/
+    Create a new auction item for the authenticated user with multiple images (up to 8).
     """
-    if request.method != "GET":
+    if request.method == "GET":
+        items = Item.objects.all().order_by("-id").prefetch_related('images')
+        return JsonResponse(
+            {
+                "items": [
+                    {
+                        "id": item.id,
+                        "title": item.title,
+                        "description": item.description,
+                        "starting_price": str(item.starting_price),
+                        "images": [
+                            {
+                                "id": img.id,
+                                "url": request.build_absolute_uri(img.image.url),
+                                "order": img.order,
+                            }
+                            for img in item.images.all()
+                        ],
+                        "ends_at": item.ends_at.isoformat(),
+                        "owner_id": item.owner_id,
+                    }
+                    for item in items
+                ]
+            },
+            status=200,
+        )
+
+    if request.method != "POST":
         return JsonResponse({"detail": "Method not allowed."}, status=405)
 
-    query = (request.GET.get("q") or "").strip()
-    sort_param = (request.GET.get("sort") or "ending-soon").strip()
+    if not request.user.is_authenticated:
+        return JsonResponse({"detail": "Authentication required."}, status=401)
 
-    sort_map: dict[str, tuple[str, ...]] = {
-        "ending-soon": ("ends_at",),
-        "newest": ("-created_at",),
-        "price-asc": ("starting_price",),
-        "price-desc": ("-starting_price",),
-    }
+    # Handle FormData with multiple file uploads
+    data = request.POST
+    image_files = request.FILES.getlist("images")  # Support multiple images
 
-    items_qs = Item.objects.filter(ends_at__gt=timezone.now())
-    if query:
-        items_qs = items_qs.annotate(
-            title_match=Case(
-                When(title__icontains=query, then=1),
-                default=0,
-                output_field=IntegerField(),
-            ),
-            desc_match=Case(
-                When(description__icontains=query, then=1),
-                default=0,
-                output_field=IntegerField(),
-            ),
-        ).filter(Q(title_match=1) | Q(desc_match=1))
+    errors: dict[str, str] = {}
 
-        if sort_param == "relevance":
-            items_qs = items_qs.order_by("-title_match", "-desc_match", "-id")
-        else:
-            items_qs = items_qs.order_by(*sort_map.get(sort_param, sort_map["ending-soon"]))
+    title = (data.get("title") or "").strip()
+    description = (data.get("description") or "").strip()
+    ends_at_raw = (data.get("ends_at") or "").strip()
+    starting_price_raw = (data.get("starting_price") or "").strip()
+
+    if not title:
+        errors["title"] = "Title is required."
+
+    # Parse money
+    starting_price: Decimal | None = None
+    if not starting_price_raw:
+        errors["starting_price"] = "Starting price is required."
     else:
-        items_qs = items_qs.order_by(*sort_map.get(sort_param, sort_map["ending-soon"]))
+        try:
+            starting_price = Decimal(starting_price_raw)
+            if starting_price < 0:
+                errors["starting_price"] = "Starting price must be 0 or more."
+        except (InvalidOperation, ValueError):
+            errors["starting_price"] = "Starting price must be a valid number."
 
-    items = items_qs
-    return JsonResponse({"items": _serialize_items(items)}, status=200)
+    # Parse datetime
+    ends_at = None
+    if not ends_at_raw:
+        errors["ends_at"] = "End date/time is required."
+    else:
+        ends_at = parse_datetime(ends_at_raw)
+        if ends_at is None:
+            errors["ends_at"] = "Invalid datetime format."
+        else:
+            if timezone.is_naive(ends_at):
+                ends_at = timezone.make_aware(ends_at, timezone.get_current_timezone())
+            if ends_at <= timezone.now():
+                errors["ends_at"] = "Auction end time must be in the future."
 
+    if errors:
+        return JsonResponse({"errors": errors}, status=400)
 
-@require_GET
-def item_detail(request: HttpRequest, item_id: int) -> JsonResponse:
-    """Return a single active item with highest bid and time remaining."""
-    now = timezone.now()
+    # Validate number of images (max 8)
+    if len(image_files) > 8:
+        return JsonResponse({"errors": {"images": "Maximum 8 images allowed."}}, status=400)
 
-    item = get_object_or_404(Item.objects.filter(pk=item_id, ends_at__gt=now))
-
-    top_bid = (
-        Bid.objects.filter(item=item)
-        .order_by("-amount", "-created_at", "-id")
-        .first()
+    item = Item(
+        owner=request.user,
+        title=title,
+        description=description,
+        starting_price=starting_price,  # type: ignore[arg-type]
+        ends_at=ends_at,  # type: ignore[arg-type]
     )
 
-    time_remaining_seconds = max(0, int((item.ends_at - now).total_seconds()))
+    created_images = []
+    try:
+        with transaction.atomic():
+            # Runs model-level validation (including your clean()).
+            item.full_clean()
+            item.save()
+
+            # Create ItemImage instances for each uploaded file
+            for idx, image_file in enumerate(image_files):
+                try:
+                    item_image = ItemImage(
+                        item=item,
+                        image=image_file,
+                        order=idx,
+                    )
+                    item_image.full_clean()
+                    item_image.save()
+                    created_images.append(item_image)
+                except ValidationError as exc:
+                    field_errors: dict[str, str] = {}
+                    for field, msgs in exc.message_dict.items():
+                        field_errors[f"image_{idx}_{field}"] = msgs[0] if msgs else "Invalid value."
+                    raise ValidationError(field_errors) from exc
+    except ValidationError as exc:
+        # Convert Django ValidationError to a simple JSON shape
+        field_errors: dict[str, str] = {}
+        for field, msgs in exc.message_dict.items():
+            field_errors[field] = msgs[0] if msgs else "Invalid value."
+        return JsonResponse({"errors": field_errors}, status=400)
 
     return JsonResponse(
         {
-            "id": item.id,
+            "id": item.pk,
             "title": item.title,
             "description": item.description,
             "starting_price": str(item.starting_price),
-            "image_url": item.image_url,
+            "images": [
+                {
+                    "id": img.id,
+                    "url": request.build_absolute_uri(img.image.url),
+                    "order": img.order,
+                }
+                for img in created_images
+            ],
             "ends_at": item.ends_at.isoformat(),
             "owner_id": item.owner_id,
-            "highest_bid": {
-                "amount": str(top_bid.amount) if top_bid else None,
-                "bidder_id": top_bid.bidder_id if top_bid else None,
-            },
-            "time_remaining_seconds": time_remaining_seconds,
-        }
+        },
+        status=201,
     )
 
+@ensure_csrf_cookie
+def main_spa(request: HttpRequest) -> HttpResponse:
+    """
+    Serve the built Vue SPA (production build).
+    """
+    return render(request, "api/spa/index.html")
 
-def main_spa(request: HttpRequest, item_id: int | None = None) -> HttpResponse:
-    """Serve the built Vue SPA entry point (accepts optional item_id for SPA routes)."""
-    return render(request, "api/spa/index.html", {})
+
+@require_POST
+def api_logout(request: HttpRequest) -> JsonResponse:
+    """Log out the user and respond with a simple JSON body."""
+    logout(request)
+    return JsonResponse({"ok": True})
+
+
+def auth_status(request: HttpRequest) -> JsonResponse:
+    """Return whether the current session is authenticated."""
+    if request.user.is_authenticated:
+        return JsonResponse(
+            {
+                "authenticated": True,
+                "user": {
+                    "id": request.user.pk,
+                    "username": request.user.username,
+                    "is_staff": request.user.is_staff,
+                },
+            }
+        )
+    return JsonResponse({"authenticated": False, "user": None})
+

@@ -24,12 +24,13 @@ async function handleResponse(response: Response) {
 }
 
 export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}): Promise<T> {
+  const mergedHeaders: HeadersInit = {
+    "Accept": "application/json",
+    ...(init.headers ?? {}),
+  };
   const response = await fetch(path, {
     credentials: "include",
-    headers: {
-      "Accept": "application/json",
-      ...init.headers,
-    },
+    headers: mergedHeaders,
     ...init,
   });
   return handleResponse(response) as Promise<T>;

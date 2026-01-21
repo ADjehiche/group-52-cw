@@ -10,7 +10,7 @@ from .models import Item
 class ItemsCollectionViewTests(TestCase):
 	def setUp(self) -> None:
 		self.client = Client()
-		self.owner = get_user_model().objects.create_user(username="owner", password="pass1234")
+		self.owner = get_user_model().objects.create_user(username="owner", password="pass1234")  # noqa: S106
 
 	def test_past_end_items_are_excluded(self) -> None:
 		now = timezone.now()

@@ -84,7 +84,7 @@ export default defineComponent({
     return {
       query: "",
       items: [] as Item[],
-      loading: false,
+      loading: true,
       error: "",
       debounceHandle: null as number | null,
       sort: "ending-soon",
@@ -92,6 +92,12 @@ export default defineComponent({
   },
   mounted() {
     this.fetchItems();
+  },
+  beforeUnmount() {
+    if (this.debounceHandle) {
+      clearTimeout(this.debounceHandle);
+      this.debounceHandle = null;
+    }
   },
   methods: {
     onQueryInput() {

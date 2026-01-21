@@ -91,7 +91,7 @@ export default defineComponent({
       this.loading = true;
       this.error = "";
       const id = Number(this.$route.params.id);
-      if (!Number.isFinite(id)) {
+      if (!Number.isInteger(id) || id <= 0) {
         this.error = "Invalid item id.";
         this.loading = false;
         return;
