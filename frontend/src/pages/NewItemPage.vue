@@ -84,7 +84,7 @@
           <label>Images (up to 8)</label>
           <div
             class="upload-zone"
-            :class="{ 'drag-over': isDragging, 'has-image': imagePreviews.length }"
+            :class="{ 'drag-over': isDragging, 'has-image': images.length }"
             @drop.prevent="handleDrop"
             @dragover.prevent="isDragging = true"
             @dragleave.prevent="isDragging = false"
@@ -99,7 +99,7 @@
               style="display: none"
             />
             
-            <div v-if="!imagePreviews.length" class="upload-placeholder">
+            <div v-if="!images.length" class="upload-placeholder">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                 <circle cx="8.5" cy="8.5" r="1.5"></circle>
@@ -112,11 +112,11 @@
             <div v-else class="image-preview-container">
               <div class="image-preview-grid">
                 <div
-                  v-for="(preview, index) in imagePreviews"
-                  :key="preview + index"
+                  v-for="(image, index) in images"
+                  :key="image.id"
                   class="image-preview-item"
                 >
-                  <img :src="preview" alt="Preview" class="image-preview" />
+                  <img :src="image.preview" alt="Preview" class="image-preview" />
                   <button
                     type="button"
                     class="remove-image"
@@ -130,7 +130,7 @@
                   </button>
                 </div>
               </div>
-              <span class="upload-hint">{{ imagePreviews.length }} / 8 selected</span>
+              <span class="upload-hint">{{ images.length }} / 8 selected</span>
             </div>
           </div>
           <div v-if="errors.image || errors.images" class="error-text">
@@ -159,6 +159,12 @@
     ends_at: string; // datetime-local string
     };
 
+    type ImageEntry = {
+    id: number;
+    file: File;
+    preview: string;
+    };
+
     export default defineComponent({
     name: "NewItemPage",
     data() {
@@ -168,8 +174,8 @@
         generalError: "",
         errors: {} as Record<string, string>,
         isDragging: false,
-        imageFiles: [] as File[],
-        imagePreviews: [] as string[],
+        images: [] as ImageEntry[],
+        nextImageId: 1,
         form: {
             title: "",
             description: "",
@@ -236,38 +242,53 @@
         addImages(files: FileList | File[]) {
           const maxImages = 8;
           const incoming = Array.from(files);
+          const newErrors: string[] = [];
+          let skipped = 0;
 
           for (const file of incoming) {
-            if (this.imageFiles.length >= maxImages) {
-              this.errors.images = "Maximum 8 images allowed.";
-              break;
+            if (this.images.length >= maxImages) {
+              newErrors.push("Maximum 8 images allowed.");
+              skipped += 1;
+              continue;
             }
 
             if (!file.type.startsWith("image/")) {
-              this.errors.images = "Only image files are allowed.";
+              newErrors.push(`${file.name}: only image files are allowed.`);
+              skipped += 1;
               continue;
             }
 
             if (file.size > 10 * 1024 * 1024) {
-              this.errors.images = "Each image must be less than 10MB.";
+              newErrors.push(`${file.name}: must be less than 10MB.`);
+              skipped += 1;
               continue;
             }
 
-            this.imageFiles.push(file);
-            this.errors.images = "";
+            const entry: ImageEntry = {
+              id: this.nextImageId,
+              file,
+              preview: "",
+            };
+            this.nextImageId += 1;
+            this.images.push(entry);
 
             const reader = new FileReader();
             reader.onload = (e) => {
-              this.imagePreviews.push(e.target?.result as string);
+              entry.preview = (e.target?.result as string) || "";
             };
             reader.readAsDataURL(file);
+          }
+
+          if (newErrors.length) {
+            const summary = skipped === 1 ? "Skipped 1 file." : `Skipped ${skipped} files.`;
+            this.errors.images = `${summary} ${newErrors.join(" ")}`.trim();
+          } else {
+            this.errors.images = "";
           }
         },
 
         removeImage(index: number) {
-          this.imageFiles.splice(index, 1);
-          this.imagePreviews.splice(index, 1);
-          this.errors.images = "";
+          this.images.splice(index, 1);
         },
 
         async submit() {
@@ -285,8 +306,8 @@
             formData.append("starting_price", this.form.starting_price.trim());
             formData.append("ends_at", this.form.ends_at);
             
-            if (this.imageFiles.length) {
-              this.imageFiles.forEach((file) => formData.append("images", file));
+            if (this.images.length) {
+              this.images.forEach((image) => formData.append("images", image.file));
             }
 
             const resp = await apiFetch("/api/items/", {
@@ -304,8 +325,8 @@
                 starting_price: "",
                 ends_at: "",
             };
-            this.imageFiles = [];
-            this.imagePreviews = [];
+            this.images = [];
+            this.nextImageId = 1;
             this.errors = {};
             return;
             }

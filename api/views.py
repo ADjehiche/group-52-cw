@@ -14,6 +14,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
+from django.db import transaction
 
 
 
@@ -135,35 +136,35 @@ def items_collection(request: HttpRequest) -> JsonResponse:
         ends_at=ends_at,  # type: ignore[arg-type]
     )
 
-    # Runs model-level validation (including your clean()).
+    created_images = []
     try:
-        item.full_clean()
-        item.save()
+        with transaction.atomic():
+            # Runs model-level validation (including your clean()).
+            item.full_clean()
+            item.save()
+
+            # Create ItemImage instances for each uploaded file
+            for idx, image_file in enumerate(image_files):
+                try:
+                    item_image = ItemImage(
+                        item=item,
+                        image=image_file,
+                        order=idx,
+                    )
+                    item_image.full_clean()
+                    item_image.save()
+                    created_images.append(item_image)
+                except ValidationError as exc:
+                    field_errors: dict[str, str] = {}
+                    for field, msgs in exc.message_dict.items():
+                        field_errors[f"image_{idx}_{field}"] = msgs[0] if msgs else "Invalid value."
+                    raise ValidationError(field_errors) from exc
     except ValidationError as exc:
         # Convert Django ValidationError to a simple JSON shape
         field_errors: dict[str, str] = {}
         for field, msgs in exc.message_dict.items():
             field_errors[field] = msgs[0] if msgs else "Invalid value."
         return JsonResponse({"errors": field_errors}, status=400)
-
-    # Create ItemImage instances for each uploaded file
-    created_images = []
-    for idx, image_file in enumerate(image_files):
-        try:
-            item_image = ItemImage(
-                item=item,
-                image=image_file,
-                order=idx
-            )
-            item_image.full_clean()
-            item_image.save()
-            created_images.append(item_image)
-        except ValidationError as exc:
-            # If image validation fails, return error
-            field_errors = {}
-            for field, msgs in exc.message_dict.items():
-                field_errors[f"image_{idx}_{field}"] = msgs[0] if msgs else "Invalid value."
-            return JsonResponse({"errors": field_errors}, status=400)
 
     return JsonResponse(
         {
