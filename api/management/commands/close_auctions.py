@@ -1,3 +1,17 @@
+"""Django management command to close ended auctions and notify participants.
+
+This command should be run periodically (e.g., via cron job) to process auctions
+that have ended but haven't been closed yet. It sends email notifications to:
+- Winners: Congratulations with item and seller details
+- Sellers (with bids): Sale confirmation with buyer details
+- Sellers (no bids): Notification that auction ended without bids
+
+Usage:
+    python manage.py close_auctions
+
+Typical cron schedule: Every hour
+    0 * * * * cd /path/to/project && python manage.py close_auctions
+"""
 from __future__ import annotations
 
 from typing import Any
@@ -15,6 +29,16 @@ class Command(BaseCommand):
     help = "Close auctions that have ended and notify winners/owners"
 
     def handle(self, *args: Any, **options: Any) -> None:
+        """Main entry point for the management command.
+        
+        Finds all items where the auction has ended (ends_at <= now) but
+        notifications haven't been sent yet (winner_notified=False).
+        For each item, processes notifications and marks as notified.
+        
+        Args:
+            *args: Positional command-line arguments (unused)
+            **options: Keyword command-line arguments (unused)
+        """
         now = timezone.now()
         
         # Find ended items where notifications haven't been sent yet
@@ -42,6 +66,18 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"Processed {processed_count} auctions."))
 
     def process_item(self, item: Item) -> None:
+        """Process a single ended auction item and send appropriate notifications.
+        
+        Determines the highest bidder (winner) and sends emails accordingly:
+        - If there are bids: Notify both winner and seller
+        - If no bids: Notify seller that auction ended without bids
+        
+        Args:
+            item: The Item instance that has ended and needs processing
+        
+        Raises:
+            Exception: Any email sending errors are raised to be caught by caller
+        """
         # Find highest bid
         highest_bid = item.bids.order_by("-amount").select_related("bidder").first()
         
@@ -112,6 +148,16 @@ The Cbay Team
                 )
 
     def send_email(self, subject: str, message: str, recipient_list: list[str]) -> None:
+        """Send an email notification using Django's email backend.
+        
+        Args:
+            subject: Email subject line
+            message: Email body content (plain text)
+            recipient_list: List of recipient email addresses
+        
+        Raises:
+            SMTPException: If email sending fails (fail_silently=False)
+        """
         send_mail(
             subject=subject,
             message=message,

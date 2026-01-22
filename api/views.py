@@ -1,3 +1,33 @@
+"""Django views for the CBay auction application API.
+
+This module contains all HTTP endpoints for the single-page application:
+
+User Management:
+    - signup: User registration
+    - auth_status: Check authentication status
+    - api_logout: Logout endpoint
+    - profile_api: Get/update user profile
+    - profile_image_api: Upload profile images
+
+Item/Auction Management:
+    - items_collection: List/create auction items
+    - item_detail: Get/delete specific items
+    - place_bid: Place bids on items
+
+Q&A System:
+    - item_questions_list_or_create: List/post questions
+    - question_answer: Seller answers to questions
+    - api_questions: Get questions by user
+    - like_question/like_answer: Like Q&A content
+
+Social Features:
+    - follow_user: Follow/unfollow users
+    - user_followers/user_following: Get follower lists
+    - follower_stats: Get follower counts
+
+Utility:
+    - main_spa: Serve Vue SPA
+"""
 from __future__ import annotations
 
 import json
@@ -27,6 +57,17 @@ User = get_user_model()
 
 
 def signup(request: HttpRequest) -> HttpResponse:
+    """Handle user registration.
+    
+    GET: Display signup form
+    POST: Process form submission, create user, log them in, redirect to home
+    
+    Args:
+        request: HTTP request object
+    
+    Returns:
+        HttpResponse: Rendered signup form or redirect to home after successful registration
+    """
     if request.method == "POST":
         form = SignUpForm(request.POST, request.FILES)
         if form.is_valid():
@@ -215,6 +256,23 @@ def items_collection(request: HttpRequest) -> JsonResponse:
 
 @require_http_methods(["GET", "DELETE"])
 def item_detail(request: HttpRequest, item_id: int) -> JsonResponse:
+    """Get or delete a specific auction item.
+    
+    GET: Return full item details including bids, owner info, follow status
+    DELETE: Delete item (owner only)
+    
+    Args:
+        request: HTTP request object
+        item_id: ID of the item to retrieve/delete
+    
+    Returns:
+        JsonResponse: Item data or empty response (204) for delete
+        
+    Raises:
+        404: If item not found
+        401: If not authenticated (DELETE only)
+        403: If not the item owner (DELETE only)
+    """
     """Return a single item or delete it."""
     item = get_object_or_404(Item.objects.prefetch_related("images"), pk=item_id)
     
@@ -271,6 +329,19 @@ def item_detail(request: HttpRequest, item_id: int) -> JsonResponse:
 
 @ensure_csrf_cookie
 def main_spa(request: HttpRequest, *args, **kwargs) -> HttpResponse:
+    """Serve the built Vue single-page application.
+    
+    Catch-all route that serves the index.html for the Vue SPA.
+    Ensures CSRF cookie is set for API requests.
+    
+    Args:
+        request: HTTP request object
+        *args: Additional positional arguments (unused)
+        **kwargs: Additional keyword arguments (unused)
+    
+    Returns:
+        HttpResponse: Rendered SPA index.html template
+    """
     """
     Serve the built Vue SPA (production build).
     """
@@ -279,12 +350,32 @@ def main_spa(request: HttpRequest, *args, **kwargs) -> HttpResponse:
 
 @require_POST
 def api_logout(request: HttpRequest) -> JsonResponse:
+    """Log out the current user.
+    
+    POST: Logs out user and returns success response
+    
+    Args:
+        request: HTTP request object
+    
+    Returns:
+        JsonResponse: {"ok": True}
+    """
     """Log out the user and respond with a simple JSON body."""
     logout(request)
     return JsonResponse({"ok": True})
 
 
 def auth_status(request: HttpRequest) -> JsonResponse:
+    """Check if user is authenticated and return user info.
+    
+    Returns authentication status and basic user information if logged in.
+    
+    Args:
+        request: HTTP request object
+    
+    Returns:
+        JsonResponse: {"authenticated": bool, "user": {...} or None}
+    """
     """Return whether the current session is authenticated."""
     if request.user.is_authenticated:
         return JsonResponse(
@@ -300,6 +391,17 @@ def auth_status(request: HttpRequest) -> JsonResponse:
     return JsonResponse({"authenticated": False, "user": None})
 
 def _profile_payload(request: HttpRequest) -> dict[str, Any]:
+    """Helper function to build profile data payload.
+    
+    Constructs a dictionary with user profile information including
+    username, email, date of birth, and profile image URL.
+    
+    Args:
+        request: HTTP request object (for authenticated user)
+    
+    Returns:
+        dict: Profile data payload
+    """
     u = request.user
 
     profile_url = None
@@ -321,6 +423,20 @@ def _profile_payload(request: HttpRequest) -> dict[str, Any]:
 @login_required
 @require_http_methods(["GET", "PATCH", "POST"])
 def profile_api(request: HttpRequest) -> JsonResponse:
+    """Get or update user profile information.
+    
+    GET: Return current user's profile data
+    PATCH/POST: Update email and/or date_of_birth (JSON payload)
+    
+    Args:
+        request: HTTP request object
+    
+    Returns:
+        JsonResponse: Profile data or error messages
+        
+    Raises:
+        401: If not authenticated (via @login_required decorator)
+    """
     """
     GET  /api/profile/        -> current profile
     PATCH/POST /api/profile/  -> update email and/or date_of_birth (JSON)
@@ -378,6 +494,20 @@ def profile_api(request: HttpRequest) -> JsonResponse:
 @login_required
 @require_POST
 def profile_image_api(request: HttpRequest) -> JsonResponse:
+    """Upload user profile image.
+    
+    POST: Upload new profile image (multipart/form-data)
+    
+    Args:
+        request: HTTP request object with FILES containing 'profile_image'
+    
+    Returns:
+        JsonResponse: Updated profile data or error messages
+        
+    Raises:
+        401: If not authenticated
+        400: If no image provided or validation fails
+    """
     """POST /api/profile/image/ -> upload profile image (multipart/form-data)."""
     image_file = request.FILES.get("profile_image")
     if not image_file:
@@ -399,6 +529,19 @@ def profile_image_api(request: HttpRequest) -> JsonResponse:
     return JsonResponse(_profile_payload(request), status=200)
 
 def api_questions(request: HttpRequest) -> JsonResponse:
+    """Get list of questions, optionally filtered by user.
+    
+    GET: List questions, filtered by user_id query param if provided
+    
+    Args:
+        request: HTTP request object
+    
+    Query Parameters:
+        user_id (optional): Filter questions by author ID
+    
+    Returns:
+        JsonResponse: {"questions": [...]}
+    """
     """Get a list of questions. For a specific user, pass the user_id as a query parameter."""
     user_id = request.GET.get("user_id")
     if user_id:
@@ -424,6 +567,22 @@ def api_questions(request: HttpRequest) -> JsonResponse:
 
 
 def item_questions_list_or_create(request: HttpRequest, item_id: int) -> JsonResponse:
+    """List or post questions for a specific item.
+    
+    GET: List all questions for the item (public)
+    POST: Create new question (authenticated users only)
+    
+    Args:
+        request: HTTP request object
+        item_id: ID of the item
+    
+    Returns:
+        JsonResponse: List of questions or newly created question
+        
+    Raises:
+        404: If item not found
+        401: If not authenticated (POST only)
+    """
     """
     GET: List all questions for an item (public)
     POST: Create a new question for an item (authenticated users only)
@@ -499,6 +658,22 @@ def item_questions_list_or_create(request: HttpRequest, item_id: int) -> JsonRes
 
 
 def question_answer(request: HttpRequest, question_id: int) -> JsonResponse:
+    """Post answer to a question (item owner only).
+    
+    POST: Answer a question about your item
+    
+    Args:
+        request: HTTP request object with JSON body containing 'content'
+        question_id: ID of the question to answer
+    
+    Returns:
+        JsonResponse: Answer data
+        
+    Raises:
+        404: If question not found
+        401: If not authenticated
+        403: If not the item owner
+    """
     """
     POST: Answer a question (item owner only)
     """
@@ -550,6 +725,22 @@ def question_answer(request: HttpRequest, question_id: int) -> JsonResponse:
 @login_required
 @require_http_methods(["POST", "DELETE"])
 def follow_user(request: HttpRequest, user_id: int) -> JsonResponse:
+    """Follow or unfollow a user.
+    
+    POST: Create follow relationship
+    DELETE: Remove follow relationship
+    
+    Args:
+        request: HTTP request object
+        user_id: ID of user to follow/unfollow
+    
+    Returns:
+        JsonResponse: Follow data or success message
+        
+    Raises:
+        404: If user not found
+        400: If trying to follow self or already following/not following
+    """
     """
     POST: Follow a user
     DELETE: Unfollow a user
@@ -595,6 +786,20 @@ def follow_user(request: HttpRequest, user_id: int) -> JsonResponse:
 
 @require_GET
 def user_followers(request: HttpRequest, user_id: int) -> JsonResponse:
+    """Get list of users following a specific user.
+    
+    GET: Return all followers of the specified user
+    
+    Args:
+        request: HTTP request object
+        user_id: ID of user to get followers for
+    
+    Returns:
+        JsonResponse: {"user_id": int, "follower_count": int, "followers": [...]}
+        
+    Raises:
+        404: If user not found
+    """
     """GET: List all followers of a user"""
     try:
         user = User.objects.get(pk=user_id)
@@ -619,6 +824,20 @@ def user_followers(request: HttpRequest, user_id: int) -> JsonResponse:
 
 @require_GET
 def user_following(request: HttpRequest, user_id: int) -> JsonResponse:
+    """Get list of users that a specific user is following.
+    
+    GET: Return all users followed by the specified user
+    
+    Args:
+        request: HTTP request object
+        user_id: ID of user to get following list for
+    
+    Returns:
+        JsonResponse: {"user_id": int, "following_count": int, "following": [...]}
+        
+    Raises:
+        404: If user not found
+    """
     """GET: List all users that this user is following"""
     try:
         user = User.objects.get(pk=user_id)
@@ -644,6 +863,16 @@ def user_following(request: HttpRequest, user_id: int) -> JsonResponse:
 @login_required
 @require_GET
 def follower_stats(request: HttpRequest) -> JsonResponse:
+    """Get follower statistics for current user.
+    
+    GET: Return follower and following counts for authenticated user
+    
+    Args:
+        request: HTTP request object
+    
+    Returns:
+        JsonResponse: {"follower_count": int, "following_count": int}
+    """
     """GET: Get follower stats for the current user"""
     user = request.user
     
@@ -659,6 +888,20 @@ def follower_stats(request: HttpRequest) -> JsonResponse:
 @login_required
 @require_POST
 def like_question(request: HttpRequest, question_id: int) -> JsonResponse:
+    """Like or unlike a question (toggle).
+    
+    POST: Toggle like status for a question
+    
+    Args:
+        request: HTTP request object
+        question_id: ID of question to like/unlike
+    
+    Returns:
+        JsonResponse: {"liked": bool, "like_count": int}
+        
+    Raises:
+        404: If question not found
+    """
     """POST: Like/unlike a question (toggle)"""
     try:
         question = Question.objects.get(pk=question_id)
@@ -689,6 +932,20 @@ def like_question(request: HttpRequest, question_id: int) -> JsonResponse:
 @login_required
 @require_POST
 def like_answer(request: HttpRequest, question_id: int) -> JsonResponse:
+    """Like or unlike an answer (toggle).
+    
+    POST: Toggle like status for an answer (accessed via question ID)
+    
+    Args:
+        request: HTTP request object
+        question_id: ID of the question whose answer to like/unlike
+    
+    Returns:
+        JsonResponse: {"liked": bool, "like_count": int}
+        
+    Raises:
+        404: If question or answer not found
+    """
     """POST: Like/unlike an answer (toggle) - accessed via question ID"""
     try:
         question = Question.objects.get(pk=question_id)
@@ -724,6 +981,26 @@ def like_answer(request: HttpRequest, question_id: int) -> JsonResponse:
 @login_required
 @require_POST
 def place_bid(request: HttpRequest, item_id: int) -> JsonResponse:
+    """Place a bid on an auction item.
+    
+    POST: Submit a new bid (JSON body with 'amount')
+    
+    Validates:
+    - Auction hasn't ended
+    - Bid exceeds current highest bid
+    - User is not the item owner
+    
+    Args:
+        request: HTTP request object with JSON body: {"amount": string/number}
+        item_id: ID of item to bid on
+    
+    Returns:
+        JsonResponse: Bid data {"id", "bidder", "amount", "created_at"}
+        
+    Raises:
+        404: If item not found
+        400: If auction ended, bid too low, or owner tries to bid
+    """
     """POST /api/items/<id>/bid/ -> Place a bid on an item."""
     try:
         item = Item.objects.get(pk=item_id)

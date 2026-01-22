@@ -1,4 +1,16 @@
+"""Django models for the CBay auction application.
 
+This module defines all database models for the auction platform:
+- User: Custom user model with profile extensions
+- Item: Auction item listings
+- ItemImage: Multiple images per item (max 8)
+- Bid: User bids on auction items with validation
+- Question/Answer: Q&A system for items
+- Follow: Social following between users
+- QuestionLike/AnswerLike: Engagement tracking for Q&A
+
+All models include comprehensive validation and business rule enforcement.
+"""
 from __future__ import annotations
 
 from decimal import Decimal
@@ -12,11 +24,20 @@ from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
-    """
-    Custom user model
-    - email: already present on AbstractUser; we enforce non-blank + unique
-    - date_of_birth: new
-    - profile_image: new
+    """Custom user model extending Django's AbstractUser.
+    
+    Adds profile fields beyond the default Django user:
+    - email: Made unique and required (overriding AbstractUser's optional email)
+    - date_of_birth: Optional user birthdate
+    - profile_image: User profile picture stored in media/profile_images/
+    
+    Related managers:
+        items: All auction items created by this user
+        bids: All bids placed by this user
+        questions: All questions asked by this user
+        answers: All answers provided by this user (as seller)
+        following: Users this user follows
+        followers: Users following this user
     """
     email = models.EmailField(unique=True)
     date_of_birth = models.DateField(blank=True, null=True)
@@ -48,6 +69,11 @@ class User(AbstractUser):
         return self.username
 
 class PageView(models.Model):
+    """Simple counter model for tracking page views (legacy/utility).
+    
+    Attributes:
+        count: Integer counter for total page views
+    """
     count = models.IntegerField(default=0)
 
     def __str__(self) -> str:
@@ -55,6 +81,21 @@ class PageView(models.Model):
 
 
 class Question(models.Model):
+    """User questions about auction items.
+    
+    Allows authenticated users to ask sellers questions about specific items.
+    Each question can have one Answer from the item owner.
+    
+    Attributes:
+        item: The auction item this question is about
+        content: The question text
+        author: User who asked the question
+        created_at: Timestamp when question was posted
+    
+    Related managers:
+        answer: The seller's answer to this question (OneToOne)
+        likes: Users who liked this question
+    """
     item = models.ForeignKey('Item', on_delete=models.CASCADE, related_name='questions')
     content: str = models.TextField()
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='questions')
@@ -69,6 +110,20 @@ class Question(models.Model):
 
 
 class Answer(models.Model):
+    """Seller answers to user questions about their auction items.
+    
+    Each Answer is linked to exactly one Question (OneToOne relationship).
+    Only the item owner can answer questions about their items.
+    
+    Attributes:
+        question: The question being answered
+        content: The answer text
+        author: User who provided the answer (should be item owner)
+        created_at: Timestamp when answer was posted
+    
+    Related managers:
+        likes: Users who liked this answer
+    """
     question: Question = models.OneToOneField(Question, on_delete=models.CASCADE, related_name='answer')
     content: str = models.TextField()
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='answers')
@@ -82,6 +137,29 @@ class Answer(models.Model):
         return f"Answer to '{preview}'" 
     
 class Item(models.Model):
+    """Auction item listing model.
+    
+    Represents an item being auctioned with a starting price and end time.
+    Enforces business rules via clean() method and database constraints.
+    
+    Attributes:
+        owner: User who created this auction
+        title: Item title (max 200 chars)
+        description: Detailed item description
+        starting_price: Minimum bid amount (must be >= 0)
+        ends_at: Auction end date/time (must be in future when created)
+        created_at: Timestamp when item was listed
+        winner_notified: Flag indicating if auction close emails were sent
+    
+    Related managers:
+        images: Item photos (max 8, ordered)
+        bids: All bids placed on this item
+        questions: User questions about this item
+    
+    Validation:
+        - starting_price must be >= 0 (database constraint + validator)
+        - ends_at must be in the future (model clean() method)
+    """
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -107,6 +185,11 @@ class Item(models.Model):
         ]
 
     def clean(self) -> None:
+        """Validate that auction end time is in the future.
+        
+        Raises:
+            ValidationError: If ends_at is not in the future
+        """
         super().clean()
 
         # Auction must end in the future when creating/updating an item.
@@ -134,6 +217,13 @@ class ItemImage(models.Model):
         verbose_name_plural = "Item Images"
 
     def clean(self) -> None:
+        """Validate maximum image limit per item.
+        
+        Ensures an item doesn't exceed 8 images total.
+        
+        Raises:
+            ValidationError: If adding this image would exceed 8 images per item
+        """
         super().clean()
 
         # Limit to maximum 8 images per item
@@ -148,6 +238,24 @@ class ItemImage(models.Model):
 
 
 class Bid(models.Model):
+    """User bid on an auction item.
+    
+    Enforces auction bidding rules:
+    - Bid must be greater than current highest bid (or starting price)
+    - Cannot bid after auction has ended
+    - Bid amount must be > 0
+    
+    Attributes:
+        item: The auction item being bid on
+        bidder: User placing the bid
+        amount: Bid amount in GBP (must be > 0)
+        created_at: Timestamp when bid was placed
+    
+    Validation:
+        - amount must be > 0 (database constraint + validator)
+        - amount must exceed current highest bid or starting price (clean())
+        - auction must not have ended (clean())
+    """
     item = models.ForeignKey(
         Item,
         on_delete=models.CASCADE,
@@ -174,6 +282,15 @@ class Bid(models.Model):
         ]
 
     def clean(self) -> None:
+        """Validate bid amount and auction status.
+        
+        Ensures:
+        1. Auction hasn't ended
+        2. Bid exceeds current highest bid or starting price
+        
+        Raises:
+            ValidationError: If auction has ended or bid is not high enough
+        """
         super().clean()
 
         now = timezone.now()
@@ -199,7 +316,19 @@ class Bid(models.Model):
 
 
 class Follow(models.Model):
-    """User follower relationship model."""
+    """User follower relationship for social features.
+    
+    Allows users to follow sellers and receive notifications when they list new items.
+    
+    Attributes:
+        follower: User who is following
+        followee: User being followed
+        created_at: Timestamp when follow relationship was created
+    
+    Constraints:
+        - unique_follow: A user can only follow another user once
+        - Users cannot follow themselves (validated in clean())
+    """
     follower = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -224,6 +353,11 @@ class Follow(models.Model):
         ordering = ['-created_at']
 
     def clean(self) -> None:
+        """Prevent users from following themselves.
+        
+        Raises:
+            ValidationError: If follower and followee are the same user
+        """
         super().clean()
         
         # Prevent users from following themselves
@@ -235,7 +369,19 @@ class Follow(models.Model):
 
 
 class QuestionLike(models.Model):
-    """Like model for questions."""
+    """Like/upvote for a user question.
+    
+    Tracks which users have liked specific questions.
+    Users can only like each question once (unique constraint).
+    
+    Attributes:
+        user: User who liked the question
+        question: Question that was liked
+        created_at: Timestamp when like was created
+    
+    Constraints:
+        - unique_question_like: A user can only like each question once
+    """
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -262,7 +408,19 @@ class QuestionLike(models.Model):
 
 
 class AnswerLike(models.Model):
-    """Like model for answers."""
+    """Like/upvote for a seller answer.
+    
+    Tracks which users have liked specific answers.
+    Users can only like each answer once (unique constraint).
+    
+    Attributes:
+        user: User who liked the answer
+        answer: Answer that was liked
+        created_at: Timestamp when like was created
+    
+    Constraints:
+        - unique_answer_like: A user can only like each answer once
+    """
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
