@@ -1,0 +1,19 @@
+# Generated migration to remove QuestionLike and AnswerLike models
+
+from django.db import migrations
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('api', '0001_initial'),
+    ]
+
+    operations = [
+        migrations.DeleteModel(
+            name='QuestionLike',
+        ),
+        migrations.DeleteModel(
+            name='AnswerLike',
+        ),
+    ]

@@ -1,0 +1,109 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Cbay</title>
+    <link rel="stylesheet" href="{% static 'api/auth.css' %}" />
+    <style>
+      .page-wrapper {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .auth-header {
+        background: var(--bg-secondary);
+        box-shadow: var(--shadow-sm);
+        border-bottom: 1px solid var(--border-light);
+        padding: 1rem 2rem;
+      }
+      
+      .auth-header-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      .auth-brand {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        text-decoration: none;
+      }
+      
+      .auth-nav a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s ease;
+      }
+      
+      .auth-nav a:hover {
+        color: var(--accent-coral);
+      }
+      
+      .auth-content {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .auth-footer {
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-light);
+        padding: 1.5rem 2rem;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <header class="auth-header">
+        <div class="auth-header-content">
+          <a href="/" class="auth-brand">Cbay</a>
+          <nav class="auth-nav">
+            <a href="/">Browse Items</a>
+          </nav>
+        </div>
+      </header>
+
+      <div class="auth-content">
+        <div class="auth-shell">
+          <div class="brand">
+            <div>
+              <h1>Welcome Back</h1>
+              <p class="description">
+                Sign in to continue bidding and tracking your items.
+              </p>
+            </div>
+          </div>
+
+          {% if form.errors %}
+          <div class="alert">Invalid username or password. Please try again.</div>
+          {% endif %}
+
+          <form method="post">
+            {% csrf_token %} {{ form.as_p }}
+            <button type="submit">Log in</button>
+          </form>
+
+          <div class="links">
+            <span class="small">New here?</span>
+            <a href="{% url 'signup' %}">Create an account</a>
+          </div>
+        </div>
+      </div>
+
+      <footer class="auth-footer">
+        <p>&copy; 2026 Cbay. All rights reserved.</p>
+      </footer>
+    </div>
+  </body>
+</html>
