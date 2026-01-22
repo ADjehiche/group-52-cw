@@ -247,19 +247,19 @@
 
           for (const file of incoming) {
             if (this.images.length >= maxImages) {
-              newErrors.push("Maximum 8 images allowed.");
+              newErrors.push(this.$t('pages.newItem.errorMaxImages'));
               skipped += 1;
               continue;
             }
 
             if (!file.type.startsWith("image/")) {
-              newErrors.push(`${file.name}: only image files are allowed.`);
+              newErrors.push(`${file.name}: ${this.$t('pages.newItem.errorImageOnly')}`);
               skipped += 1;
               continue;
             }
 
             if (file.size > 10 * 1024 * 1024) {
-              newErrors.push(`${file.name}: must be less than 10MB.`);
+              newErrors.push(`${file.name}: ${this.$t('pages.newItem.errorImageSize')}`);
               skipped += 1;
               continue;
             }
@@ -280,7 +280,7 @@
           }
 
           if (newErrors.length) {
-            const summary = skipped === 1 ? "Skipped 1 file." : `Skipped ${skipped} files.`;
+            const summary = skipped === 1 ? this.$t('pages.newItem.errorSkippedOne') : (this.$t as any)('pages.newItem.errorSkippedMany', { count: skipped });
             this.errors.images = `${summary} ${newErrors.join(" ")}`.trim();
           } else {
             this.errors.images = "";
@@ -318,7 +318,7 @@
             const data = await resp.json().catch(() => ({}));
 
             if (resp.status === 201) {
-            this.successMessage = "Item created successfully.";
+            this.successMessage = this.$t('pages.newItem.success');
             this.form = {
                 title: "",
                 description: "",
@@ -332,7 +332,7 @@
             }
 
             if (resp.status === 401) {
-            this.generalError = "You must be logged in to create items.";
+            this.generalError = this.$t('pages.newItem.errorLoginRequired');
             return;
             }
 
@@ -341,9 +341,9 @@
             return;
             }
 
-            this.generalError = "Something went wrong. Please try again.";
+            this.generalError = this.$t('pages.newItem.errorGeneric');
         } catch {
-            this.generalError = "Network error. Is the backend running?";
+            this.generalError = this.$t('pages.newItem.errorNetwork');
         } finally {
             this.submitting = false;
         }

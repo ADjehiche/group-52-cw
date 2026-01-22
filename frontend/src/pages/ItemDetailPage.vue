@@ -5,7 +5,7 @@
       <h1 class="h3 mb-1">{{ item?.title || $t('pages.itemDetail.loading') }}</h1>
     </header>
 
-    <div v-if="loading" class="text-muted">Loading item…</div>
+    <div v-if="loading" class="text-muted">{{ $t('pages.itemDetail.loadingText') }}</div>
     <div v-else-if="error" class="text-danger">{{ error }}</div>
     <div v-else-if="item" class="item-grid">
       <!-- Left Column: Image -->
@@ -57,7 +57,7 @@
             @click="toggleFollow"
             :disabled="followLoading"
           >
-            {{ item.is_following_owner ? 'Unfollow' : 'Follow' }}
+            {{ item.is_following_owner ? $t('pages.itemDetail.unfollow') : $t('pages.itemDetail.follow') }}
           </button>
         </div>
 
@@ -95,10 +95,10 @@
           <template v-else-if="isOwner">
             <div class="owner-controls">
               <div class="alert alert-info">
-                You cannot bid on your own item.
+                {{ $t('pages.itemDetail.selfBidRestriction') }}
               </div>
               <button class="btn btn-danger w-100 mt-2" @click="deleteListing">
-                Delete Listing
+                {{ $t('pages.itemDetail.deleteButton') }}
               </button>
             </div>
           </template>
@@ -141,13 +141,13 @@
             v-model="newQuestion" 
             class="form-control" 
             rows="3" 
-            placeholder="Ask a question..."
+            :placeholder="$t('pages.itemDetail.questionPlaceholder')"
             :disabled="postingQuestion"
             required
           ></textarea>
           <div class="d-flex justify-content-end mt-2">
             <button class="btn btn-secondary btn-sm" type="submit" :disabled="postingQuestion || !newQuestion.trim()">
-              {{ postingQuestion ? 'Posting...' : 'Post Question' }}
+              {{ postingQuestion ? $t('pages.itemDetail.posting') : $t('pages.itemDetail.postQuestion') }}
             </button>
           </div>
           <div v-if="questionError" class="text-danger mt-2 small">{{ questionError }}</div>
@@ -180,25 +180,25 @@
             <p>{{ q.answer.content }}</p>
           </div>
           
-          <div v-else-if="isOwner" class="qa-reply mt-3">
+           <div v-else-if="isOwner" class="qa-reply mt-3">
              <button v-if="replyingToId !== q.id" @click="startReply(q.id)" class="btn btn-sm btn-outline-primary">
-               Reply
+               {{ $t('pages.itemDetail.replyButton') }}
              </button>
              <form v-else @submit.prevent="submitAnswer(q.id)" class="reply-form">
                <textarea
                  v-model="replyContent"
                  class="form-control mb-2"
                  rows="2"
-                 placeholder="Write your answer..."
+                 :placeholder="$t('pages.itemDetail.replyPlaceholder')"
                  :disabled="submittingAnswer"
                  required
                ></textarea>
                <div class="d-flex gap-2">
                  <button type="submit" class="btn btn-sm btn-primary" :disabled="submittingAnswer || !replyContent.trim()">
-                   {{ submittingAnswer ? 'Sending...' : 'Send Answer' }}
+                   {{ submittingAnswer ? $t('pages.itemDetail.sending') : $t('pages.itemDetail.sendAnswer') }}
                  </button>
                  <button type="button" class="btn btn-sm btn-outline-secondary" @click="cancelReply" :disabled="submittingAnswer">
-                   Cancel
+                   {{ $t('pages.itemDetail.cancel') }}
                  </button>
                </div>
                <div v-if="answerError" class="text-danger mt-2 small">{{ answerError }}</div>
@@ -310,7 +310,7 @@ export default defineComponent({
       }
       const id = Number((this as any).$route.params.id);
       if (!Number.isInteger(id) || id <= 0) {
-        this.error = "Invalid item id.";
+        this.error = this.$t('pages.itemDetail.errorInvalidId');
         this.loading = false;
         return;
       }
@@ -319,7 +319,7 @@ export default defineComponent({
         this.remainingSeconds = this.item.time_remaining_seconds ?? 0;
         this.startTick();
       } catch (err: unknown) {
-        this.error = err instanceof Error ? err.message : "Failed to load item.";
+        this.error = err instanceof Error ? err.message : this.$t('pages.itemDetail.errorLoadFailed');
       } finally {
         this.loading = false;
       }
@@ -353,7 +353,7 @@ export default defineComponent({
 
       try {
         await placeBid(this.item.id, this.bidAmount);
-        this.bidSuccess = "Bid placed successfully!";
+        this.bidSuccess = this.$t('pages.itemDetail.bidSuccess');
         this.bidAmount = "";
         await this.load(); // Reload to see new highest bid
       } catch (err: any) {
@@ -365,7 +365,7 @@ export default defineComponent({
              else if (structured.detail) this.bidError = structured.detail;
              else this.bidError = JSON.stringify(structured);
          } else {
-             this.bidError = "Failed to place bid.";
+             this.bidError = this.$t('pages.itemDetail.bidFailed');
          }
       } finally {
         this.placingBid = false;
@@ -398,7 +398,7 @@ export default defineComponent({
               else if (structured.detail) this.questionError = structured.detail;
               else this.questionError = JSON.stringify(structured);
           } else {
-              this.questionError = "Failed to post question.";
+              this.questionError = this.$t('pages.itemDetail.questionFailed');
           }
       } finally {
         this.postingQuestion = false;
@@ -436,7 +436,7 @@ export default defineComponent({
               else if (structured.detail) this.answerError = structured.detail;
               else this.answerError = JSON.stringify(structured);
           } else {
-              this.answerError = "Failed to post answer.";
+              this.answerError = this.$t('pages.itemDetail.answerFailed');
           }
       } finally {
         this.submittingAnswer = false;
@@ -460,7 +460,7 @@ export default defineComponent({
       }
     },
     async deleteListing() {
-      if (!this.item || !confirm("Are you sure you want to delete this listing? This action cannot be undone.")) return;
+      if (!this.item || !confirm(this.$t('pages.itemDetail.deleteConfirm'))) return;
       try {
         await deleteItem(this.item.id);
         window.location.href = "/";

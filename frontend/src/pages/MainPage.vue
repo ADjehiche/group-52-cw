@@ -36,7 +36,7 @@
               v-model="onlyMyItems" 
               @change="fetchItems"
             >
-            <label for="my-listings">Show My Listings Only</label>
+            <label for="my-listings">{{ $t('pages.main.showMyListings') }}</label>
           </div>
         </div>
         <button type="button" class="ghost" @click="clearQuery" v-if="query">{{ $t('pages.main.clear') }}</button>
@@ -65,7 +65,7 @@
                 class="card-preview-image"
               />
               <div v-else class="card-no-image">
-                <span>No Image</span>
+                <span>{{ $t('pages.main.noImage') }}</span>
               </div>
             </div>
             <div class="card-content">

@@ -27,7 +27,9 @@
       "loading": "Loading items…",
       "noItems": "No items found.",
       "ends": "Ends",
-      "id": "ID"
+      "id": "ID",
+      "showMyListings": "Show My Listings Only",
+      "noImage": "No Image"
     },
     "itemDetail": {
       "eyebrow": "Item Details",
@@ -44,7 +46,27 @@
       "qaHeading": "Q&A",
       "qaComingSoon": "Public questions and answers will appear here (coming soon).",
       "noDescription": "No description provided.",
-      "noImage": "No Image Available"
+      "noImage": "No Image Available",
+      "loadingText": "Loading item...",
+      "errorInvalidId": "Invalid item id.",
+      "errorLoadFailed": "Failed to load item.",
+      "deleteConfirm": "Are you sure you want to delete this listing? This action cannot be undone.",
+      "deleteButton": "Delete Listing",
+      "selfBidRestriction": "You cannot bid on your own item.",
+      "bidSuccess": "Bid placed successfully!",
+      "bidFailed": "Failed to place bid.",
+      "questionPlaceholder": "Ask a question...",
+      "postQuestion": "Post Question",
+      "posting": "Posting...",
+      "questionFailed": "Failed to post question.",
+      "replyButton": "Reply",
+      "replyPlaceholder": "Write your answer...",
+      "sendAnswer": "Send Answer",
+      "sending": "Sending...",
+      "cancel": "Cancel",
+      "answerFailed": "Failed to post answer.",
+      "follow": "Follow",
+      "unfollow": "Unfollow"
     },
     "profile": {
       "title": "Profile",
@@ -78,7 +100,15 @@
       "imagesSelected": "selected",
       "createItem": "Create item",
       "creating": "Creating...",
-      "success": "Item created successfully."
+      "success": "Item created successfully.",
+      "errorMaxImages": "Maximum 8 images allowed.",
+      "errorImageOnly": "only image files are allowed.",
+      "errorImageSize": "must be less than 10MB.",
+      "errorSkippedOne": "Skipped 1 file.",
+      "errorSkippedMany": "Skipped {count} files.",
+      "errorLoginRequired": "You must be logged in to create items.",
+      "errorGeneric": "Something went wrong. Please try again.",
+      "errorNetwork": "Network error. Is the backend running?"
     }
   },
   "footer": {
