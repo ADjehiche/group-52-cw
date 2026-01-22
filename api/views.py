@@ -204,10 +204,18 @@ def items_collection(request: HttpRequest) -> JsonResponse:
     )
 
 
-@require_GET
+@require_http_methods(["GET", "DELETE"])
 def item_detail(request: HttpRequest, item_id: int) -> JsonResponse:
-    """Return a single item."""
+    """Return a single item or delete it."""
     item = get_object_or_404(Item.objects.prefetch_related("images"), pk=item_id)
+    
+    if request.method == "DELETE":
+        if not request.user.is_authenticated:
+            return JsonResponse({"detail": "Authentication required."}, status=401)
+        if request.user != item.owner:
+            return JsonResponse({"detail": "Only the owner can delete this item."}, status=403)
+        item.delete()
+        return JsonResponse({}, status=204)
     
     highest_bid = item.bids.order_by("-amount").first()
     highest_bid_data = None
@@ -253,7 +261,7 @@ def item_detail(request: HttpRequest, item_id: int) -> JsonResponse:
     )
 
 @ensure_csrf_cookie
-def main_spa(request: HttpRequest) -> HttpResponse:
+def main_spa(request: HttpRequest, *args, **kwargs) -> HttpResponse:
     """
     Serve the built Vue SPA (production build).
     """
@@ -715,6 +723,10 @@ def place_bid(request: HttpRequest, item_id: int) -> JsonResponse:
 
     if item.ends_at <= timezone.now():
         return JsonResponse({"detail": "Auction has ended."}, status=400)
+
+    # Restrict owner from bidding on their own item
+    if request.user == item.owner:
+        return JsonResponse({"detail": "You cannot bid on your own item."}, status=400)
 
     try:
         data = json.loads(request.body)
