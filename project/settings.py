@@ -150,6 +150,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Media files (Uploaded content)
 # AWS S3 Configuration
 USE_S3 = os.getenv("USE_S3", "False") == "True"
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage" if not DEBUG else "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 if USE_S3:
     from botocore.config import Config
@@ -168,28 +173,24 @@ if USE_S3:
     AWS_QUERYSTRING_EXPIRE = 3600
     AWS_S3_SIGNATURE_VERSION = 's3v4'
 
-    # Using standard S3 signed URLs for private files
-    # AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
-
-    STORAGES = {
-        "default": {
-            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-            "OPTIONS": {
-                "bucket_name": AWS_STORAGE_BUCKET_NAME,
-                "region_name": AWS_S3_REGION_NAME,
-                "location": AWS_LOCATION,
-                "querystring_auth": True,
-                # "custom_domain": AWS_S3_CUSTOM_DOMAIN,
-            },
-        },
-        "staticfiles": {
-            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage" if not DEBUG else "django.contrib.staticfiles.storage.StaticFilesStorage",
+    # Add S3 storage to STORAGES
+    STORAGES["default"] = {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "bucket_name": AWS_STORAGE_BUCKET_NAME,
+            "region_name": AWS_S3_REGION_NAME,
+            "location": AWS_LOCATION,
+            "querystring_auth": True,
         },
     }
 
     # MEDIA_URL is not used for S3 FileField.url generation, but define harmlessly:
     MEDIA_URL = "/media/"
 else:
+    # Use local file storage
+    STORAGES["default"] = {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    }
     MEDIA_URL = "/media/"
     MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
@@ -200,9 +201,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 if DEBUG:
-    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+    # STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+    pass
 else:
-    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    # STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    pass 
 
 INTERNAL_IPS = ['127.0.0.1']
 
