@@ -31,9 +31,9 @@ SECRET_KEY = os.getenv(
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['https://group-52-cw-group-52-cw.apps.a.comp-teach.qmul.ac.uk','localhost:5173']
 
 
 # Application definition
