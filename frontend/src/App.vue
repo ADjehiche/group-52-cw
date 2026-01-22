@@ -160,6 +160,7 @@ export default defineComponent({
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
   color: white;
+  background: var(--accent-coral-hover);
 }
 
 .btn-logout {
