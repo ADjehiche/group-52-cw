@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: notify-followers-cron
+spec:
+  schedule: "0 * * * *" # Every hour
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: notify-followers
+            image: image-registry.openshift-image-registry.svc:5000/group-52-cw/group-52-cw:latest
+            imagePullPolicy: Always
+            command: ["python", "manage.py", "notify_followers"]
+            envFrom:
+              - secretRef:
+                  name: cbay-secrets # Ensure ALL env vars are in this secret
+          restartPolicy: OnFailure
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: close-auctions-cron
+spec:
+  schedule: "*/1 * * * *" # Every minute (to close auctions promptly)
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: close-auctions
+            image: image-registry.openshift-image-registry.svc:5000/group-52-cw/group-52-cw:latest
+            imagePullPolicy: Always
+            command: ["python", "manage.py", "close_auctions"]
+            envFrom:
+              - secretRef:
+                  name: cbay-secrets
+          restartPolicy: OnFailure
