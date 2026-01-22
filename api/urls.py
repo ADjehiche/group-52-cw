@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, re_path
 
 from .views import (
     api_logout,
@@ -35,9 +35,8 @@ urlpatterns = [
     path("api/auth/status/", auth_status, name="auth_status"),
     path("api/profile/", profile_api, name="profile_api"),
     path("api/profile/image/", profile_image_api, name="profile_image_api"),
-    path("items/", items_collection, name="items-collection"),
-    path("items/<int:item_id>/", main_spa, name="spa-item-detail"),
-    path("", main_spa, name="spa"),
+    # Catch-all for SPA routes (must be last)
+    re_path(r"^.*$", main_spa, name="spa"),
 ]
 
 
