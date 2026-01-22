@@ -26,7 +26,18 @@
             <option value="newest">{{ $t('pages.main.sortNewest') }}</option>
             <option value="price-asc">{{ $t('pages.main.sortPriceLow') }}</option>
             <option value="price-desc">{{ $t('pages.main.sortPriceHigh') }}</option>
+            <option value="price-desc">{{ $t('pages.main.sortPriceHigh') }}</option>
           </select>
+          
+          <div v-if="currentUserId" class="my-listings-toggle">
+            <input 
+              type="checkbox" 
+              id="my-listings" 
+              v-model="onlyMyItems" 
+              @change="fetchItems"
+            >
+            <label for="my-listings">Show My Listings Only</label>
+          </div>
         </div>
         <button type="button" class="ghost" @click="clearQuery" v-if="query">{{ $t('pages.main.clear') }}</button>
       </div>
@@ -77,6 +88,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { fetchAuthStatus } from "../auth";
 
 type Item = {
   id: number;
@@ -98,7 +110,19 @@ export default defineComponent({
       error: "",
       debounceHandle: null as number | null,
       sort: "ending-soon",
+      onlyMyItems: false,
+      currentUserId: null as number | null,
     };
+  },
+  async created() {
+    try {
+      const status = await fetchAuthStatus();
+      if (status.authenticated && status.user) {
+        this.currentUserId = status.user.id;
+      }
+    } catch {
+      // ignore
+    }
   },
   mounted() {
     this.fetchItems();
@@ -134,6 +158,9 @@ export default defineComponent({
       }
       if (this.sort) {
         params.append("sort", this.sort);
+      }
+      if (this.onlyMyItems && this.currentUserId) {
+        params.append("user_id", String(this.currentUserId));
       }
       const queryString = params.toString();
       try {
@@ -255,6 +282,30 @@ export default defineComponent({
 .controls select:focus {
   outline: none;
   border-color: var(--accent-coral);
+}
+
+.my-listings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  padding: 0.65rem 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  border: 2px solid var(--border-medium);
+}
+
+.my-listings-toggle input {
+  accent-color: var(--accent-coral);
+  width: 1.25em;
+  height: 1.25em;
+  cursor: pointer;
+}
+
+.my-listings-toggle label {
+  cursor: pointer;
 }
 
 .search-row button.ghost {

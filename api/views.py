@@ -50,6 +50,7 @@ def items_collection(request: HttpRequest) -> JsonResponse:
     if request.method == "GET":
         query = (request.GET.get("q") or "").strip()
         sort_param = (request.GET.get("sort") or "ending-soon").strip()
+        user_id_param = request.GET.get("user_id")
 
         sort_map: dict[str, tuple[str, ...]] = {
             "ending-soon": ("ends_at",),
@@ -59,6 +60,14 @@ def items_collection(request: HttpRequest) -> JsonResponse:
         }
 
         items_qs = Item.objects.filter(ends_at__gt=timezone.now()).prefetch_related("images")
+        
+        if user_id_param:
+            try:
+                uid = int(user_id_param)
+                items_qs = items_qs.filter(owner_id=uid)
+            except ValueError:
+                pass # Ignore invalid user_id
+
         if query:
             items_qs = items_qs.annotate(
                 title_match=Case(

@@ -463,7 +463,8 @@ export default defineComponent({
       if (!this.item || !confirm("Are you sure you want to delete this listing? This action cannot be undone.")) return;
       try {
         await deleteItem(this.item.id);
-        (this as any).$router.push({ name: "Main Page" });
+        await deleteItem(this.item.id);
+        window.location.href = "/";
       } catch (err: any) {
         this.error = err.detail || "Failed to delete item.";
       }
