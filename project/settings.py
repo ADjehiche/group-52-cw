@@ -184,7 +184,7 @@ if USE_S3:
         },
     }
 
-    # MEDIA_URL is not used for S3 FileField.url generation, but define harmlessly:
+
     MEDIA_URL = "/media/"
 else:
     # Use local file storage
