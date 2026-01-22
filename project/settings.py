@@ -33,7 +33,7 @@ SECRET_KEY = os.getenv(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['https://group-52-cw-group-52-cw.apps.a.comp-teach.qmul.ac.uk','localhost:5173']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -217,6 +217,11 @@ if DEBUG:
     # Cookie / CSRF settings for dev with Vite proxy
     SESSION_COOKIE_SAMESITE = "Lax"
     CSRF_COOKIE_SAMESITE = "Lax"
+
+# Production CSRF settings (always trusted)
+CSRF_TRUSTED_ORIGINS = [
+    "https://group-52-cw-group-52-cw.apps.a.comp-teach.qmul.ac.uk",
+]
 
 
 # Redirect destinations for Django auth views (login/logout)
