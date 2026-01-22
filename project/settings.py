@@ -200,13 +200,6 @@ else:
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-if DEBUG:
-    # STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
-    pass
-else:
-    # STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-    pass 
-
 INTERNAL_IPS = ['127.0.0.1']
 
 if DEBUG:
