@@ -1,6 +1,6 @@
 {
   "nav": {
-    "mainPage": "Main Page",
+    "mainPage": "CBay",
     "otherPage": "Other Page",
     "newItem": "New Item",
     "profile": "Profile",
@@ -11,10 +11,74 @@
   },
   "pages": {
     "main": {
-      "title": "Main Page"
+      "title": "CBay",
+      "eyebrow": "Marketplace",
+      "heading": "Browse Items",
+      "subtitle": "Search by title or description. Only active listings are shown.",
+      "searchLabel": "Keyword",
+      "searchPlaceholder": "e.g. camera, phone",
+      "sortLabel": "Sort by",
+      "sortEndingSoon": "Ending soon (default)",
+      "sortRelevance": "Relevance (when searching)",
+      "sortNewest": "Newest",
+      "sortPriceLow": "Price: low to high",
+      "sortPriceHigh": "Price: high to low",
+      "clear": "Clear",
+      "loading": "Loading items…",
+      "noItems": "No items found.",
+      "ends": "Ends",
+      "id": "ID"
     },
-    "other": {
-      "title": "Other Page"
+    "itemDetail": {
+      "eyebrow": "Item Details",
+      "loading": "Loading item…",
+      "startingPrice": "Starting price",
+      "highestBid": "Highest bid",
+      "noBids": "No bids yet",
+      "timeRemaining": "Time remaining",
+      "endsAt": "Ends at",
+      "ended": "Ended",
+      "loginToBid": "Login to bid",
+      "bidComingSoon": "Bid feature coming soon",
+      "goToQA": "Go to Q&A",
+      "qaHeading": "Q&A",
+      "qaComingSoon": "Public questions and answers will appear here (coming soon).",
+      "noDescription": "No description provided.",
+      "noImage": "No Image Available"
+    },
+    "profile": {
+      "title": "Profile",
+      "subtitle": "Manage your details and profile image.",
+      "loading": "Loading...",
+      "profileImage": "Profile image",
+      "noImage": "No image",
+      "uploadImage": "Upload image",
+      "uploading": "Uploading...",
+      "details": "Details",
+      "username": "Username",
+      "email": "Email",
+      "dateOfBirth": "Date of birth",
+      "saveChanges": "Save changes",
+      "saving": "Saving...",
+      "saved": "Saved!"
+    },
+    "newItem": {
+      "title": "Create New Item",
+      "subtitle": "List your item for auction and start receiving bids.",
+      "titleLabel": "Title",
+      "titlePlaceholder": "e.g. Wooden desk",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Describe the condition, size, etc.",
+      "startingPriceLabel": "Starting price",
+      "pricePlaceholder": "e.g. 100.00",
+      "endsAtLabel": "End date/time",
+      "imagesLabel": "Images (up to 8)",
+      "uploadPrompt": "Click to upload or drag and drop",
+      "uploadHint": "PNG, JPG, GIF up to 10MB each (max 8)",
+      "imagesSelected": "selected",
+      "createItem": "Create item",
+      "creating": "Creating...",
+      "success": "Item created successfully."
     }
   },
   "footer": {

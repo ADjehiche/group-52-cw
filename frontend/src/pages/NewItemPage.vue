@@ -1,20 +1,10 @@
 <template>
   <div class="new-item-page">
-    <nav class="page-nav">
-      <div class="nav-links">
-        <RouterLink class="nav-link" to="/">Main</RouterLink>
-        <RouterLink class="nav-link" to="/other/">Other</RouterLink>
-        <RouterLink class="nav-link" to="/items/new/">Create Item</RouterLink>
-      </div>
-      <button type="button" class="nav-link nav-logout" @click="logoutUser">
-        Logout
-      </button>
-    </nav>
-    <div class="auth-shell">
+    <div class="content-wrapper">
       <div class="brand">
-        <h1>Create new item</h1>
+        <h1>{{ $t('pages.newItem.title') }}</h1>
         <p class="description">
-          List your item for auction and start receiving bids.
+          {{ $t('pages.newItem.subtitle') }}
         </p>
       </div>
 
@@ -31,14 +21,14 @@
       <form @submit.prevent="submit">
         <!-- Title -->
         <div>
-          <label for="title">Title</label>
+          <label for="title">{{ $t('pages.newItem.titleLabel') }}</label>
           <input
             id="title"
             v-model.trim="form.title"
             type="text"
             required
             maxlength="120"
-            placeholder="e.g. Wooden desk"
+            :placeholder="$t('pages.newItem.titlePlaceholder')"
           />
           <div v-if="errors.title" class="error-text">
             {{ errors.title }}
@@ -47,12 +37,12 @@
 
         <!-- Description -->
         <div>
-          <label for="description">Description</label>
+          <label for="description">{{ $t('pages.newItem.descriptionLabel') }}</label>
           <textarea
             id="description"
             v-model.trim="form.description"
             rows="5"
-            placeholder="Describe the condition, size, etc."
+            :placeholder="$t('pages.newItem.descriptionPlaceholder')"
           ></textarea>
           <div v-if="errors.description" class="error-text">
             {{ errors.description }}
@@ -62,12 +52,12 @@
         <div class="form-row">
           <!-- Starting price -->
           <div class="form-col">
-            <label for="starting_price">Starting price</label>
+            <label for="starting_price">{{ $t('pages.newItem.startingPriceLabel') }}</label>
             <input
               id="starting_price"
               v-model.trim="form.starting_price"
               type="text"
-              placeholder="e.g. 100.00"
+              :placeholder="$t('pages.newItem.pricePlaceholder')"
             />
             <div v-if="errors.starting_price" class="error-text">
               {{ errors.starting_price }}
@@ -76,7 +66,7 @@
 
           <!-- End date/time -->
           <div class="form-col">
-            <label for="ends_at">End date/time</label>
+            <label for="ends_at">{{ $t('pages.newItem.endsAtLabel') }}</label>
             <input
               id="ends_at"
               v-model="form.ends_at"
@@ -91,7 +81,7 @@
 
         <!-- Multiple Image Upload (Drag & Drop) -->
         <div>
-          <label>Images (up to 8)</label>
+          <label>{{ $t('pages.newItem.imagesLabel') }}</label>
           <div
             class="upload-zone"
             :class="{ 'drag-over': isDragging, 'has-image': images.length }"
@@ -115,8 +105,8 @@
                 <circle cx="8.5" cy="8.5" r="1.5"></circle>
                 <polyline points="21 15 16 10 5 21"></polyline>
               </svg>
-              <p>Click to upload or drag and drop</p>
-              <span class="upload-hint">PNG, JPG, GIF up to 10MB each (max 8)</span>
+              <p>{{ $t('pages.newItem.uploadPrompt') }}</p>
+              <span class="upload-hint">{{ $t('pages.newItem.uploadHint') }}</span>
             </div>
             
             <div v-else class="image-preview-container">
@@ -140,7 +130,7 @@
                   </button>
                 </div>
               </div>
-              <span class="upload-hint">{{ images.length }} / 8 selected</span>
+              <span class="upload-hint">{{ images.length }} / 8 {{ $t('pages.newItem.imagesSelected') }}</span>
             </div>
           </div>
           <div v-if="errors.image || errors.images" class="error-text">
@@ -149,7 +139,7 @@
         </div>
 
         <button type="submit" :disabled="submitting">
-          {{ submitting ? "Creating..." : "Create item" }}
+          {{ submitting ? $t('pages.newItem.creating') : $t('pages.newItem.createItem') }}
         </button>
       </form>
     </div>
@@ -301,14 +291,6 @@
           this.images.splice(index, 1);
         },
 
-        async logoutUser() {
-        try {
-          await apiFetch("/api/logout/", { method: "POST" });
-        } finally {
-          window.location.href = "/";
-        }
-        },
-
         async submit() {
         if (!this.validateClient()) return;
 
@@ -371,109 +353,20 @@
 </script>
 
 <style scoped>
-/* Import sophisticated font */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 .new-item-page {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  min-height: 100vh;
-  width: 100vw;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 96px 24px 24px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg, #1a1f2e 0%, #0f1419 100%);
-  color: #ffffff;
-  overflow-x: hidden;
-  overflow-y: auto;
-  z-index: 9999;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
 }
 
-.page-nav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  background: #0f1419;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-  z-index: 100000;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.nav-links {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.nav-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #e5e7eb;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: all 0.2s ease;
-}
-
-.nav-link:hover {
-  background: rgba(245, 158, 11, 0.15);
-  border-color: rgba(245, 158, 11, 0.4);
-  color: #ffffff;
-}
-
-.nav-logout {
-  cursor: pointer;
-}
-
-.new-item-page::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    radial-gradient(circle at 20% 30%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
-  pointer-events: none;
-}
-
-.auth-shell {
-  width: min(740px, 100%);
-  background: #1a1f2e;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+.content-wrapper {
+  max-width: 740px;
+  margin: 0 auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
   border-radius: 16px;
   padding: 48px 40px;
-  position: relative;
-  z-index: 1;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-}
-
-.auth-shell::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, #f59e0b, transparent);
-  border-radius: 16px 16px 0 0;
+  box-shadow: var(--shadow-md);
 }
 
 h1 {
@@ -481,14 +374,11 @@ h1 {
   font-weight: 700;
   letter-spacing: -0.5px;
   margin-bottom: 8px;
-  background: linear-gradient(135deg, #ffffff 0%, #e5e7eb 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
 }
 
 p.description {
-  color: #8b95a8;
+  color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 32px;
   font-size: 15px;
@@ -504,7 +394,7 @@ label {
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary);
   letter-spacing: 0.3px;
   text-transform: uppercase;
   font-size: 12px;
@@ -513,27 +403,27 @@ label {
 input,
 textarea {
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid var(--border-medium);
+  background: var(--bg-secondary);
   border-radius: 10px;
   padding: 13px 16px;
   font-size: 15px;
-  color: #ffffff;
+  color: var(--text-primary);
   font-family: inherit;
   transition: all 0.2s ease;
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--text-muted);
 }
 
 input:focus,
 textarea:focus {
   outline: none;
-  border-color: #f59e0b;
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+  border-color: var(--accent-coral);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
 }
 
 textarea {
@@ -554,8 +444,8 @@ textarea {
 
 button[type="submit"] {
   margin-top: 8px;
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: #0f1419;
+  background: var(--gradient-warm);
+  color: white;
   border: none;
   border-radius: 10px;
   padding: 14px;
@@ -566,12 +456,12 @@ button[type="submit"] {
   letter-spacing: 0.3px;
   text-transform: uppercase;
   font-size: 14px;
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2);
+  box-shadow: var(--shadow-sm);
 }
 
 button[type="submit"]:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.2);
+  box-shadow: var(--shadow-md);
 }
 
 button[type="submit"]:active:not(:disabled) {
@@ -588,100 +478,81 @@ button[type="submit"]:disabled {
   padding: 12px 14px;
   width: 100%;
   border-radius: 12px;
-  background: rgba(239, 68, 68, 0.08);
-  color: #fecdd3;
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: rgba(211, 47, 47, 0.1);
+  color: #d32f2f;
+  border: 2px solid rgba(211, 47, 47, 0.2);
   font-size: 14px;
   line-height: 1.5;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
 .alert-success {
-  background: rgba(16, 185, 129, 0.08);
-  color: #a7f3d0;
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  background: rgba(46, 125, 50, 0.1);
+  color: #2e7d32;
+  border: 2px solid rgba(46, 125, 50, 0.3);
 }
 
 .error-text {
   font-size: 13px;
-  color: #fca5a5;
+  color: #d32f2f;
   margin-top: 6px;
   line-height: 1.4;
 }
 
-/* Multi-image grid styles */
-.images-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.image-slot {
-  aspect-ratio: 1;
+/* Upload zone styles */
+.upload-zone {
+  border: 2px dashed var(--border-medium);
   border-radius: 12px;
-  overflow: hidden;
-  position: relative;
-  background: rgba(255, 255, 255, 0.02);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.2s ease;
-}
-
-.image-slot.has-image {
-  border-color: rgba(245, 158, 11, 0.3);
-}
-
-.image-slot.upload-slot {
-  border-style: dashed;
-  border-color: rgba(255, 255, 255, 0.2);
+  padding: 24px;
+  min-height: 200px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  transition: all 0.2s ease;
+  background: var(--bg-secondary);
 }
 
-.image-slot.upload-slot:hover {
-  border-color: rgba(245, 158, 11, 0.6);
-  background: rgba(255, 255, 255, 0.04);
-  transform: scale(1.02);
+.upload-zone.drag-over {
+  border-color: var(--accent-coral);
+  background: rgba(255, 107, 107, 0.05);
+  transform: scale(1.01);
 }
 
-.image-slot.upload-slot.drag-over {
-  border-color: #f59e0b;
-  background: rgba(245, 158, 11, 0.1);
-  transform: scale(1.05);
+.upload-zone.has-image {
+  border-style: solid;
+  border-color: var(--border-light);
+  cursor: default;
 }
 
 .upload-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  color: #8b95a8;
-  padding: 12px;
+  gap: 12px;
+  color: var(--text-secondary);
+  padding: 24px;
 }
 
 .upload-placeholder svg {
   opacity: 0.6;
-  color: #f59e0b;
+  color: var(--accent-coral);
 }
 
 .upload-placeholder p {
   margin: 0;
-  font-size: 13px;
-  font-weight: 500;
-  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .upload-hint {
-  font-size: 11px;
-  color: #8b95a8;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  text-align: center;
+  display: block;
 }
 
 .image-preview-container {
   position: relative;
   width: 100%;
-  height: 100%;
   min-height: 200px;
 }
 
@@ -690,30 +561,31 @@ button[type="submit"]:disabled {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 12px;
+  margin-bottom: 12px;
 }
 
 .image-preview-item {
   position: relative;
   border-radius: 10px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
   padding: 6px;
+  aspect-ratio: 1;
 }
 
 .image-preview {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  border-radius: 12px;
-  max-height: 400px;
+  object-fit: cover;
+  border-radius: 6px;
 }
 
 .remove-image {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  background: rgba(239, 68, 68, 0.9);
+  top: 10px;
+  right: 10px;
+  background: rgba(211, 47, 47, 0.95);
   border: none;
   border-radius: 6px;
   width: 28px;
@@ -723,13 +595,12 @@ button[type="submit"]:disabled {
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #ffffff;
-  backdrop-filter: blur(8px);
+  color: white;
   z-index: 2;
 }
 
 .remove-image:hover {
-  background: rgba(239, 68, 68, 1);
+  background: #d32f2f;
   transform: scale(1.1);
 }
 
@@ -737,27 +608,10 @@ button[type="submit"]:disabled {
   stroke-width: 3;
 }
 
-.image-number {
-  position: absolute;
-  bottom: 6px;
-  left: 6px;
-  background: rgba(0, 0, 0, 0.7);
-  color: #ffffff;
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 11px;
-  font-weight: 600;
-  backdrop-filter: blur(4px);
-}
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .form-row {
     grid-template-columns: 1fr;
-  }
-  
-  .images-grid {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
 }
 
@@ -770,7 +624,7 @@ button[type="submit"]:disabled {
     font-size: 24px;
   }
   
-  .images-grid {
+  .image-preview-grid {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 8px;
   }

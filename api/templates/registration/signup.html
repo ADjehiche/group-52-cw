@@ -4,141 +4,215 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sign up</title>
+    <title>Sign Up - Cbay</title>
     <link rel="stylesheet" href="{% static 'api/auth.css' %}" />
+    <style>
+      .page-wrapper {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .auth-header {
+        background: var(--bg-secondary);
+        box-shadow: var(--shadow-sm);
+        border-bottom: 1px solid var(--border-light);
+        padding: 1rem 2rem;
+      }
+      
+      .auth-header-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      .auth-brand {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        text-decoration: none;
+      }
+      
+      .auth-nav a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s ease;
+      }
+      
+      .auth-nav a:hover {
+        color: var(--accent-coral);
+      }
+      
+      .auth-content {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 0;
+      }
+      
+      .auth-footer {
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-light);
+        padding: 1.5rem 2rem;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+    </style>
   </head>
   <body>
-    <div class="auth-shell">
-      <h1>Create account</h1>
-      <p class="description">Start bidding and listing items today.</p>
-
-      {% if form.errors %}
-      <div class="alert">
-        {% if form.non_field_errors %}
-          {% for error in form.non_field_errors %}
-            <div>{{ error }}</div>
-          {% endfor %}
-        {% endif %}
-        
-        {% for field in form %}
-          {% for error in field.errors %}
-            <div>{{ field.label }}: {{ error }}</div>
-          {% endfor %}
-        {% endfor %}
-      </div>
-      {% endif %}
-
-      <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-
-        <div>
-          <label for="{{ form.username.id_for_label }}">Username:</label>
-          {{ form.username }}
+    <div class="page-wrapper">
+      <header class="auth-header">
+        <div class="auth-header-content">
+          <a href="/" class="auth-brand">Signup</a>
+          <nav class="auth-nav">
+            <a href="/">Browse Items</a>
+          </nav>
         </div>
+      </header>
 
-        <div>
-          <label for="{{ form.email.id_for_label }}">Email:</label>
-          {{ form.email }}
-        </div>
+      <div class="auth-content">
+        <div class="auth-shell">
+          <h1>Create Account</h1>
+          <p class="description">Start bidding and listing items today.</p>
 
-        <div>
-          <label for="{{ form.password1.id_for_label }}">Password:</label>
+          {% if form.errors %}
+          <div class="alert">
+            {% if form.non_field_errors %}
+              {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+              {% endfor %}
+            {% endif %}
+            
+            {% for field in form %}
+              {% for error in field.errors %}
+                <div>{{ field.label }}: {{ error }}</div>
+              {% endfor %}
+            {% endfor %}
+          </div>
+          {% endif %}
 
-          <div style="position: relative;">
-            {{ form.password1 }}
-            <button
-              type="button"
-              data-toggle-password="{{ form.password1.id_for_label }}"
-              aria-pressed="false"
-              aria-label="Show password"
-              style="
-                position: absolute;
-                top: 50%;
-                right: 14px;
-                transform: translateY(-50%);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: transparent;
-                border: none;
-                padding: 0;
-                margin: 0;
-                cursor: pointer;
-                color: rgba(255,255,255,0.55);
-              "
-            >
-              <svg class="icon-eye-off" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  style="display:block;">
-                <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
-                <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path>
-                <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path>
-                <line x1="2" x2="22" y1="2" y2="22"></line>
-              </svg>
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
 
-              <svg class="icon-eye" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  style="display:none;">
-                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-            </button>
+            <div>
+              <label for="{{ form.username.id_for_label }}">Username:</label>
+              {{ form.username }}
+            </div>
+
+            <div>
+              <label for="{{ form.email.id_for_label }}">Email:</label>
+              {{ form.email }}
+            </div>
+
+            <div>
+              <label for="{{ form.password1.id_for_label }}">Password:</label>
+
+              <div style="position: relative;">
+                {{ form.password1 }}
+                <button
+                  type="button"
+                  data-toggle-password="{{ form.password1.id_for_label }}"
+                  aria-pressed="false"
+                  aria-label="Show password"
+                  style="
+                    position: absolute;
+                    top: 50%;
+                    right: 14px;
+                    transform: translateY(-50%);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: transparent;
+                    border: none;
+                    padding: 0;
+                    margin: 0;
+                    cursor: pointer;
+                    color: var(--text-muted);
+                  "
+                >
+                  <svg class="icon-eye-off" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      style="display:block;">
+                    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
+                    <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path>
+                    <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path>
+                    <line x1="2" x2="22" y1="2" y2="22"></line>
+                  </svg>
+
+                  <svg class="icon-eye" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      style="display:none;">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label for="{{ form.password2.id_for_label }}">Confirm password:</label>
+
+              <div style="position: relative;">
+                {{ form.password2 }}
+                <button
+                  type="button"
+                  data-toggle-password="{{ form.password2.id_for_label }}"
+                  aria-pressed="false"
+                  aria-label="Show confirm password"
+                  style="
+                    position: absolute;
+                    top: 50%;
+                    right: 14px;
+                    transform: translateY(-50%);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: transparent;
+                    border: none;
+                    padding: 0;
+                    margin: 0;
+                    cursor: pointer;
+                    color: var(--text-muted);
+                  "
+                >
+                  <svg class="icon-eye-off" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      style="display:block;">
+                    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
+                    <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path>
+                    <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path>
+                    <line x1="2" x2="22" y1="2" y2="22"></line>
+                  </svg>
+
+                  <svg class="icon-eye" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      style="display:none;">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+
+            <button type="submit">Sign up</button>
+          </form>
+
+          <div class="links">
+            <span>Have an account?</span>
+            <a href="{% url 'login' %}">Sign in</a>
           </div>
         </div>
-
-        <div>
-          <label for="{{ form.password2.id_for_label }}">Confirm password:</label>
-
-          <div style="position: relative;">
-            {{ form.password2 }}
-            <button
-              type="button"
-              data-toggle-password="{{ form.password2.id_for_label }}"
-              aria-pressed="false"
-              aria-label="Show confirm password"
-              style="
-                position: absolute;
-                top: 50%;
-                right: 14px;
-                transform: translateY(-50%);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: transparent;
-                border: none;
-                padding: 0;
-                margin: 0;
-                cursor: pointer;
-                color: rgba(255,255,255,0.55);
-              "
-            >
-              <svg class="icon-eye-off" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  style="display:block;">
-                <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
-                <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path>
-                <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path>
-                <line x1="2" x2="22" y1="2" y2="22"></line>
-              </svg>
-
-              <svg class="icon-eye" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  style="display:none;">
-                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-
-        <button type="submit">Sign up</button>
-      </form>
-
-      <div class="links">
-        <span>Have an account?</span>
-        <a href="{% url 'login' %}">Sign in</a>
       </div>
+
+      <footer class="auth-footer">
+        <p>&copy; 2026 Cbay. All rights reserved.</p>
+      </footer>
     </div>
 
     <script>

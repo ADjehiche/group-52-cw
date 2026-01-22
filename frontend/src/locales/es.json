@@ -1,6 +1,6 @@
 {
   "nav": {
-    "mainPage": "Página Principal",
+    "mainPage": "CBay",
     "otherPage": "Otra Página",
     "newItem": "Nuevo Artículo",
     "profile": "Perfil",
@@ -11,10 +11,74 @@
   },
   "pages": {
     "main": {
-      "title": "Página Principal"
+      "title": "CBay",
+      "eyebrow": "Mercado",
+      "heading": "Explorar Artículos",
+      "subtitle": "Buscar por título o descripción. Solo se muestran listados activos.",
+      "searchLabel": "Palabra clave",
+      "searchPlaceholder": "ej. cámara, teléfono",
+      "sortLabel": "Ordenar por",
+      "sortEndingSoon": "Terminando pronto (predeterminado)",
+      "sortRelevance": "Relevancia (al buscar)",
+      "sortNewest": "Más reciente",
+      "sortPriceLow": "Precio: bajo a alto",
+      "sortPriceHigh": "Precio: alto a bajo",
+      "clear": "Limpiar",
+      "loading": "Cargando artículos…",
+      "noItems": "No se encontraron artículos.",
+      "ends": "Termina",
+      "id": "ID"
     },
-    "other": {
-      "title": "Otra Página"
+    "itemDetail": {
+      "eyebrow": "Detalles del Artículo",
+      "loading": "Cargando artículo…",
+      "startingPrice": "Precio inicial",
+      "highestBid": "Oferta más alta",
+      "noBids": "Aún no hay ofertas",
+      "timeRemaining": "Tiempo restante",
+      "endsAt": "Termina en",
+      "ended": "Terminado",
+      "loginToBid": "Inicia sesión para ofertar",
+      "bidComingSoon": "Función de oferta próximamente",
+      "goToQA": "Ir a P&R",
+      "qaHeading": "P&R",
+      "qaComingSoon": "Las preguntas y respuestas públicas aparecerán aquí (próximamente).",
+      "noDescription": "No se proporcionó descripción.",
+      "noImage": "Imagen no disponible"
+    },
+    "profile": {
+      "title": "Perfil",
+      "subtitle": "Administra tus detalles e imagen de perfil.",
+      "loading": "Cargando...",
+      "profileImage": "Imagen de perfil",
+      "noImage": "Sin imagen",
+      "uploadImage": "Subir imagen",
+      "uploading": "Subiendo...",
+      "details": "Detalles",
+      "username": "Nombre de usuario",
+      "email": "Correo electrónico",
+      "dateOfBirth": "Fecha de nacimiento",
+      "saveChanges": "Guardar cambios",
+      "saving": "Guardando...",
+      "saved": "¡Guardado!"
+    },
+    "newItem": {
+      "title": "Crear Nuevo Artículo",
+      "subtitle": "Lista tu artículo para subasta y comienza a recibir ofertas.",
+      "titleLabel": "Título",
+      "titlePlaceholder": "ej. Escritorio de madera",
+      "descriptionLabel": "Descripción",
+      "descriptionPlaceholder": "Describe la condición, tamaño, etc.",
+      "startingPriceLabel": "Precio inicial",
+      "pricePlaceholder": "ej. 100.00",
+      "endsAtLabel": "Fecha/hora de finalización",
+      "imagesLabel": "Imágenes (hasta 8)",
+      "uploadPrompt": "Haz clic para subir o arrastra y suelta",
+      "uploadHint": "PNG, JPG, GIF hasta 10MB cada uno (máx. 8)",
+      "imagesSelected": "seleccionadas",
+      "createItem": "Crear artículo",
+      "creating": "Creando...",
+      "success": "¡Artículo creado exitosamente!"
     }
   },
   "footer": {

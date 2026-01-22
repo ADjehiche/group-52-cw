@@ -1,20 +1,23 @@
-/* Import sophisticated font */
+/* Import modern font */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg-dark: #0f1419;
-  --bg-gradient: linear-gradient(135deg, #1a1f2e 0%, #0f1419 100%);
-  --card: #1a1f2e;
-  --card-border: rgba(255, 255, 255, 0.08);
-  --text: #ffffff;
-  --text-muted: #8b95a8;
-  --accent: #f59e0b;
-  --accent-hover: #d97706;
-  --accent-glow: rgba(245, 158, 11, 0.2);
-  --input-bg: rgba(255, 255, 255, 0.03);
-  --input-border: rgba(255, 255, 255, 0.1);
-  --success: #10b981;
-  --error: #ef4444;
+  /* Light theme variables matching the design system */
+  --bg-primary: #faf8f5;
+  --bg-secondary: #f5f3f0;
+  --bg-card: #ffffff;
+  --text-primary: #2d2d2d;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --accent-coral: #ff6b6b;
+  --accent-amber: #ffa94d;
+  --accent-sage: #95b8a0;
+  --border-light: #e8e6e1;
+  --border-medium: #d4d1cc;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --gradient-warm: linear-gradient(135deg, #ff6b6b 0%, #ffa94d 100%);
+  --gradient-bg: linear-gradient(135deg, #faf8f5 0%, #f5f3f0 100%);
 }
 
 * {
@@ -25,50 +28,21 @@
 
 body {
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
+  margin: 0;
+  padding: 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: var(--bg-gradient);
-  color: var(--text);
-  position: relative;
-  overflow-x: hidden;
-}
-
-body::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    radial-gradient(circle at 20% 30%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
-  pointer-events: none;
+  background: var(--gradient-bg);
+  color: var(--text-primary);
 }
 
 .auth-shell {
   width: min(440px, 100%);
-  background: var(--card);
-  border: 1px solid var(--card-border);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
   border-radius: 16px;
   padding: 48px 40px;
-  position: relative;
-  z-index: 1;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-}
-
-.auth-shell::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  border-radius: 16px 16px 0 0;
+  box-shadow: var(--shadow-md);
+  margin: 24px;
 }
 
 h1 {
@@ -76,14 +50,15 @@ h1 {
   font-weight: 700;
   letter-spacing: -0.5px;
   margin-bottom: 8px;
-  background: linear-gradient(135deg, #ffffff 0%, #e5e7eb 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
+}
+
+.brand h1 {
+  margin-bottom: 8px;
 }
 
 p.description {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 32px;
   font-size: 15px;
@@ -103,7 +78,7 @@ label {
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
-  color: var(--text);
+  color: var(--text-primary);
   letter-spacing: 0.3px;
   text-transform: uppercase;
   font-size: 12px;
@@ -111,31 +86,31 @@ label {
 
 input {
   width: 100%;
-  border: 1px solid var(--input-border);
-  background: var(--input-bg);
+  border: 2px solid var(--border-medium);
+  background: var(--bg-secondary);
   border-radius: 10px;
   padding: 13px 16px;
   font-size: 15px;
-  color: var(--text);
+  color: var(--text-primary);
   font-family: inherit;
   transition: all 0.2s ease;
 }
 
 input::placeholder {
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--text-muted);
 }
 
 input:focus {
   outline: none;
-  border-color: var(--accent);
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 0 0 3px var(--accent-glow);
+  border-color: var(--accent-coral);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
 }
 
 button[type="submit"] {
   margin-top: 8px;
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
-  color: var(--bg-dark);
+  background: var(--gradient-warm);
+  color: white;
   border: none;
   border-radius: 10px;
   padding: 14px;
@@ -146,12 +121,12 @@ button[type="submit"] {
   letter-spacing: 0.3px;
   text-transform: uppercase;
   font-size: 14px;
-  box-shadow: 0 4px 16px var(--accent-glow);
+  box-shadow: var(--shadow-sm);
 }
 
 button[type="submit"]:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px var(--accent-glow);
+  box-shadow: var(--shadow-md);
 }
 
 button[type="submit"]:active {
@@ -165,16 +140,16 @@ button[type="submit"]:active {
   align-items: center;
   gap: 8px;
   padding-top: 28px;
-  border-top: 1px solid var(--card-border);
+  border-top: 1px solid var(--border-light);
 }
 
 .links span {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
 .links a {
-  color: var(--accent);
+  color: var(--accent-coral);
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
@@ -189,7 +164,7 @@ button[type="submit"]:active {
   left: 0;
   width: 0;
   height: 2px;
-  background: var(--accent);
+  background: var(--accent-coral);
   transition: width 0.2s ease;
 }
 
@@ -202,12 +177,11 @@ button[type="submit"]:active {
   padding: 12px 14px;
   width: 100%;
   border-radius: 12px;
-  background: rgba(239, 68, 68, 0.08);
-  color: #fecdd3;
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: rgba(211, 47, 47, 0.1);
+  color: #d32f2f;
+  border: 2px solid rgba(211, 47, 47, 0.2);
   font-size: 14px;
   line-height: 1.5;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
 .small {
@@ -219,7 +193,7 @@ button[type="submit"]:active {
 
 .error-text {
   font-size: 13px;
-  color: #fca5a5;
+  color: #d32f2f;
   margin-top: 6px;
   line-height: 1.4;
 }

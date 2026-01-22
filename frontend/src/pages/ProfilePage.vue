@@ -2,8 +2,8 @@
   <div class="auth-shell">
     <div class="auth-card">
       <div class="auth-header">
-        <h1 class="auth-title">Profile</h1>
-        <p class="auth-subtitle">Manage your details and profile image.</p>
+        <h1 class="auth-title">{{ $t('pages.profile.title') }}</h1>
+        <p class="auth-subtitle">{{ $t('pages.profile.subtitle') }}</p>
       </div>
 
       <div v-if="loading" class="auth-muted">Loading...</div>
@@ -19,7 +19,7 @@
         <!-- Image -->
         <div class="section">
           <div class="section-head">
-            <h2 class="section-title">Profile image</h2>
+            <h2 class="section-title">{{ $t('pages.profile.profileImage') }}</h2>
           </div>
 
           <div class="image-row">
@@ -30,7 +30,7 @@
                 alt="Profile"
                 class="avatar-img"
               />
-              <span v-else class="auth-muted small">No image</span>
+              <span v-else class="auth-muted small">{{ $t('pages.profile.noImage') }}</span>
             </div>
 
             <div class="image-controls">
@@ -51,7 +51,7 @@
                 :disabled="uploading || !imageFile"
                 @click="uploadImage"
               >
-                {{ uploading ? "Uploading..." : "Upload image" }}
+                {{ uploading ? $t('pages.profile.uploading') : $t('pages.profile.uploadImage') }}
               </button>
             </div>
           </div>
@@ -60,16 +60,16 @@
         <!-- Details -->
         <div class="section">
           <div class="section-head">
-            <h2 class="section-title">Details</h2>
+            <h2 class="section-title">{{ $t('pages.profile.details') }}</h2>
           </div>
 
           <div class="field">
-            <label class="auth-label">Username</label>
+            <label class="auth-label">{{ $t('pages.profile.username') }}</label>
             <input class="auth-input" type="text" :value="profile?.username" disabled />
           </div>
 
           <div class="field">
-            <label class="auth-label">Email</label>
+            <label class="auth-label">{{ $t('pages.profile.email') }}</label>
             <input
               class="auth-input"
               type="email"
@@ -80,7 +80,7 @@
           </div>
 
           <div class="field">
-            <label class="auth-label">Date of birth</label>
+            <label class="auth-label">{{ $t('pages.profile.dateOfBirth') }}</label>
             <input
               class="auth-input"
               type="date"
@@ -98,7 +98,7 @@
             :disabled="saving"
             @click="saveProfile"
           >
-            {{ saving ? "Saving..." : "Save changes" }}
+            {{ saving ? $t('pages.profile.saving') : $t('pages.profile.saveChanges') }}
           </button>
         </div>
       </div>
@@ -290,79 +290,73 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* Page background like your login/signup */
+/* Light theme for Profile Page */
 .auth-shell {
   min-height: calc(100vh - 60px);
   display: grid;
   place-items: center;
   padding: 48px 16px;
-  background:
-    radial-gradient(1200px 600px at 20% 10%, rgba(255, 164, 0, 0.12), transparent 55%),
-    radial-gradient(900px 500px at 80% 20%, rgba(255, 164, 0, 0.10), transparent 60%),
-    linear-gradient(180deg, #0b1220 0%, #070b14 100%);
+  background: var(--gradient-bg);
 }
 
 .auth-card {
   width: 100%;
   max-width: 760px;
-  background: rgba(17, 24, 39, 0.86);
-  border: 1px solid rgba(255, 164, 0, 0.18);
-  border-radius: 18px;
-  padding: 28px;
-  box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(255, 164, 0, 0.08) inset;
-  backdrop-filter: blur(10px);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: var(--shadow-lg);
 }
 
 .auth-header {
-  margin-bottom: 18px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border-light);
 }
 
 .auth-title {
   margin: 0;
-  font-size: 36px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: #f3f4f6;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .auth-subtitle {
-  margin: 8px 0 0;
-  color: rgba(243, 244, 246, 0.65);
-  font-size: 14px;
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary);
+  font-size: 1rem;
 }
 
 .auth-muted {
-  color: rgba(243, 244, 246, 0.65);
+  color: var(--text-muted);
 }
 
 .section {
-  margin-top: 18px;
-  padding: 16px;
-  border-radius: 14px;
-  background: rgba(15, 23, 42, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border-radius: 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
 }
 
 .section-head {
-  margin-bottom: 12px;
+  margin-bottom: 1rem;
 }
 
 .section-title {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(243, 244, 246, 0.72);
+  color: var(--accent-amber);
+  font-weight: 600;
 }
 
 .image-row {
   display: grid;
   grid-template-columns: 96px 1fr;
-  gap: 14px;
+  gap: 1rem;
   align-items: center;
 }
 
@@ -370,17 +364,21 @@ export default defineComponent({
   .image-row {
     grid-template-columns: 1fr;
   }
+  
+  .auth-title {
+    font-size: 1.5rem;
+  }
 }
 
 .avatar {
   width: 96px;
   height: 96px;
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: rgba(2, 6, 23, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-medium);
 }
 
 .avatar-img {
@@ -391,97 +389,110 @@ export default defineComponent({
 
 .image-controls {
   display: grid;
-  gap: 10px;
+  gap: 0.75rem;
 }
 
 .field {
-  margin-top: 12px;
+  margin-top: 1rem;
   display: grid;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .auth-label {
-  font-size: 12px;
-  letter-spacing: 0.08em;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: rgba(243, 244, 246, 0.70);
+  color: var(--text-secondary);
+  font-weight: 600;
 }
 
 .auth-input {
   width: 100%;
-  padding: 12px 12px;
-  border-radius: 12px;
-  background: rgba(2, 6, 23, 0.40);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  color: #f3f4f6;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-medium);
+  color: var(--text-primary);
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: all 0.2s ease;
+  font-size: 1rem;
 }
 
 .auth-input:focus {
-  border-color: rgba(255, 164, 0, 0.55);
-  box-shadow: 0 0 0 4px rgba(255, 164, 0, 0.12);
+  border-color: var(--accent-coral);
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
 }
 
 .auth-input:disabled {
-  opacity: 0.65;
+  opacity: 0.6;
   cursor: not-allowed;
+  background: var(--bg-primary);
 }
 
 .auth-input--invalid {
-  border-color: rgba(239, 68, 68, 0.7);
+  border-color: #d32f2f;
 }
 
 .btn-primary {
-  margin-top: 6px;
+  margin-top: 0.5rem;
   width: 100%;
   border: none;
-  border-radius: 12px;
-  padding: 12px 14px;
-  font-weight: 800;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
   letter-spacing: 0.02em;
-  color: #0b1220;
-  background: linear-gradient(180deg, #ffb020 0%, #f59e0b 100%);
-  box-shadow: 0 10px 28px rgba(245, 158, 11, 0.22);
+  color: white;
+  background: var(--gradient-warm);
+  box-shadow: var(--shadow-md);
   cursor: pointer;
-  transition: transform 0.08s ease, filter 0.15s ease, opacity 0.15s ease;
+  transition: all 0.2s ease;
+  font-size: 1rem;
 }
 
-.btn-primary:hover {
-  filter: brightness(1.02);
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
-.btn-primary:active {
-  transform: translateY(1px);
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .btn-primary:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
 .auth-error {
-  font-size: 12px;
-  color: rgba(248, 113, 113, 0.95);
+  font-size: 0.875rem;
+  color: #d32f2f;
+  margin-top: 0.25rem;
 }
 
 .auth-alert {
-  padding: 10px 12px;
-  border-radius: 12px;
-  margin-bottom: 12px;
-  border: 1px solid transparent;
-  font-size: 14px;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  border: 2px solid transparent;
+  font-size: 0.95rem;
+  font-weight: 500;
 }
 
 .auth-alert--error {
-  background: rgba(239, 68, 68, 0.10);
-  border-color: rgba(239, 68, 68, 0.25);
-  color: rgba(248, 113, 113, 0.95);
+  background: rgba(211, 47, 47, 0.1);
+  border-color: rgba(211, 47, 47, 0.3);
+  color: #d32f2f;
 }
 
 .auth-alert--success {
-  background: rgba(34, 197, 94, 0.10);
-  border-color: rgba(34, 197, 94, 0.25);
-  color: rgba(134, 239, 172, 0.95);
+  background: rgba(46, 125, 50, 0.1);
+  border-color: rgba(46, 125, 50, 0.3);
+  color: #2e7d32;
+}
+
+.small {
+  font-size: 0.875rem;
 }
 </style>
+

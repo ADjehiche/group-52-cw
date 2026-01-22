@@ -158,17 +158,18 @@ if USE_S3:
     AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
     AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
 
-    AWS_S3_REGION_NAME = "eu-west-2"
+    AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "eu-north-1")
     AWS_LOCATION = "media"
 
     AWS_DEFAULT_ACL = None
     AWS_S3_FILE_OVERWRITE = False
 
-    AWS_QUERYSTRING_AUTH = False
+    AWS_QUERYSTRING_AUTH = True
     AWS_QUERYSTRING_EXPIRE = 3600
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
 
-    # Avoid redirects (signature break) by using regional endpoint + path-style
-    AWS_S3_ENDPOINT_URL = f"https://s3.{AWS_S3_REGION_NAME}.amazonaws.com"
+    # Using standard S3 signed URLs for private files
+    # AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
 
     STORAGES = {
         "default": {
@@ -177,8 +178,8 @@ if USE_S3:
                 "bucket_name": AWS_STORAGE_BUCKET_NAME,
                 "region_name": AWS_S3_REGION_NAME,
                 "location": AWS_LOCATION,
-                "querystring_auth": False,
-                "endpoint_url": AWS_S3_ENDPOINT_URL,
+                "querystring_auth": True,
+                # "custom_domain": AWS_S3_CUSTOM_DOMAIN,
             },
         },
         "staticfiles": {
@@ -214,7 +215,21 @@ if DEBUG:
     SESSION_COOKIE_SAMESITE = "Lax"
     CSRF_COOKIE_SAMESITE = "Lax"
 
+
 # Redirect destinations for Django auth views (login/logout)
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 LOGIN_URL = "/accounts/login/"
+
+# Email Configuration (Gmail SMTP for follower notifications)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.getenv('EMAIL_HOST_USER', 'noreply@cbay.com')
+
+# Site URL for email links (update for production)
+SITE_URL = os.getenv('SITE_URL', 'http://localhost:8000')
+

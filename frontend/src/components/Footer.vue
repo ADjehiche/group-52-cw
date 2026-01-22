@@ -1,20 +1,20 @@
 <template>
-  <footer class="footer mt-auto py-3 bg-light border-top">
-    <div class="container">
-      <div class="row align-items-center">
-        <div class="col-md-6 text-center text-md-start">
-          <span class="text-muted">© 2026 Your App</span>
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-content">
+        <div class="footer-left">
+          <span class="copyright">© 2026 Cbay 🏛️</span>
         </div>
-        <div class="col-md-6 text-center text-md-end">
-          <div class="d-inline-flex align-items-center">
-            <label class="me-2 text-muted">{{ $t('footer.language') }}:</label>
-            <div class="btn-group btn-group-sm" role="group" aria-label="Language selector">
+        <div class="footer-right">
+          <div class="language-selector">
+            <label class="lang-label">{{ $t('footer.language') }}:</label>
+            <div class="lang-buttons">
               <button
                 v-for="locale in availableLocales"
                 :key="locale.code"
                 type="button"
-                class="btn"
-                :class="currentLocale === locale.code ? 'btn-primary' : 'btn-outline-primary'"
+                class="lang-btn"
+                :class="{ active: currentLocale === locale.code }"
                 @click="changeLocale(locale.code)"
               >
                 {{ locale.label }}
@@ -58,10 +58,82 @@ export default defineComponent({
 
 <style scoped>
 .footer {
-  margin-top: 2rem;
+  margin-top: auto;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-light);
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.btn-group-sm .btn {
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 2rem;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.copyright {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.language-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.lang-label {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.lang-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.lang-btn {
+  padding: 0.4rem 1rem;
+  border: 2px solid var(--border-medium);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.85rem;
   min-width: 70px;
 }
+
+.lang-btn:hover {
+  border-color: var(--accent-coral);
+  color: var(--accent-coral);
+  background: var(--bg-hover);
+}
+
+.lang-btn.active {
+  background: var(--accent-coral);
+  border-color: var(--accent-coral);
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .language-selector {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
 </style>
+

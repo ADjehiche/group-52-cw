@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 from decimal import Decimal, InvalidOperation
+from typing import Any
 
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
@@ -14,12 +16,14 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods, require_POST, require_GET
 from django.contrib.auth import get_user_model
 
-from .models import Item, Question, Answer,ItemImage
+from .models import Answer, AnswerLike, Bid, Follow, Item, ItemImage, Question, QuestionLike
 from django.db import transaction
-from django.db.models import Case, IntegerField, Q, When
+from django.db.models import Case, Count, IntegerField, Q, When
 
-from .models import Answer, Item, ItemImage, Question
 from .forms import SignUpForm
+
+User = get_user_model()
+
 
 
 def signup(request: HttpRequest) -> HttpResponse:
@@ -95,6 +99,7 @@ def items_collection(request: HttpRequest) -> JsonResponse:
                         ],
                         "ends_at": item.ends_at.isoformat(),
                         "owner_id": item.owner_id,
+                        "time_remaining_seconds": max(0, (item.ends_at - timezone.now()).total_seconds()),
                     }
                     for item in items
                 ]
@@ -203,6 +208,25 @@ def items_collection(request: HttpRequest) -> JsonResponse:
 def item_detail(request: HttpRequest, item_id: int) -> JsonResponse:
     """Return a single item."""
     item = get_object_or_404(Item.objects.prefetch_related("images"), pk=item_id)
+    
+    highest_bid = item.bids.order_by("-amount").first()
+    highest_bid_data = None
+    if highest_bid:
+        highest_bid_data = {
+            "amount": str(highest_bid.amount),
+            "bidder_id": highest_bid.bidder_id,
+        }
+
+    
+    # Check if current user is following the owner
+    is_following_owner = False
+    if request.user.is_authenticated and request.user.pk != item.owner_id:
+        is_following_owner = Follow.objects.filter(follower=request.user, followee=item.owner).exists()
+    
+    owner_avatar_url = None
+    if item.owner.profile_image:
+        owner_avatar_url = request.build_absolute_uri(item.owner.profile_image.url)
+
     return JsonResponse(
         {
             "id": item.id,
@@ -219,6 +243,11 @@ def item_detail(request: HttpRequest, item_id: int) -> JsonResponse:
             ],
             "ends_at": item.ends_at.isoformat(),
             "owner_id": item.owner_id,
+            "owner_username": item.owner.username,
+            "owner_avatar_url": owner_avatar_url,
+            "is_following_owner": is_following_owner,
+            "highest_bid": highest_bid_data,
+            "time_remaining_seconds": max(0, (item.ends_at - timezone.now()).total_seconds()),
         },
         status=200,
     )
@@ -399,10 +428,12 @@ def item_questions_list_or_create(request: HttpRequest, item_id: int) -> JsonRes
                         "content": q.content,
                         "author": q.author.username,
                         "author_id": q.author_id,
+                        "author_avatar_url": request.build_absolute_uri(q.author.profile_image.url) if q.author.profile_image else None,
                         "created_at": q.created_at.isoformat(),
                         "answer": {
                             "content": q.answer.content,
                             "created_at": q.answer.created_at.isoformat(),
+                            "author_avatar_url": request.build_absolute_uri(q.item.owner.profile_image.url) if q.item.owner.profile_image else None, 
                         } if hasattr(q, "answer") else None,
                     }
                     for q in questions
@@ -440,6 +471,7 @@ def item_questions_list_or_create(request: HttpRequest, item_id: int) -> JsonRes
                 "content": question.content,
                 "author": question.author.username,
                 "author_id": question.author_id,
+                "author_avatar_url": request.build_absolute_uri(question.author.profile_image.url) if question.author.profile_image else None,
                 "created_at": question.created_at.isoformat(),
                 "answer": None,
             },
@@ -484,7 +516,7 @@ def question_answer(request: HttpRequest, question_id: int) -> JsonResponse:
     # Create or update the answer
     answer, created = Answer.objects.update_or_create(
         question=question,
-        defaults={"content": content},
+        defaults={"content": content, "author": request.user},
     )
     
     return JsonResponse(
@@ -495,4 +527,230 @@ def question_answer(request: HttpRequest, question_id: int) -> JsonResponse:
             "created_at": answer.created_at.isoformat(),
         },
         status=201 if created else 200,
+    )
+# New API endpoints for followers and likes
+
+@login_required
+@require_http_methods(["POST", "DELETE"])
+def follow_user(request: HttpRequest, user_id: int) -> JsonResponse:
+    """
+    POST: Follow a user
+    DELETE: Unfollow a user
+    """
+    # Check if target user exists
+    try:
+        followee = User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({"detail": "User not found."}, status=404)
+    
+    # Cannot follow yourself
+    if request.user.pk == user_id:
+        return JsonResponse({"detail": "You cannot follow yourself."}, status=400)
+    
+    if request.method == "POST":
+        # Create follow relationship
+        follow, created = Follow.objects.get_or_create(
+            follower=request.user,
+            followee=followee
+        )
+        
+        if not created:
+            return JsonResponse({"detail": "You are already following this user."}, status=400)
+        
+        return JsonResponse({
+            "id": follow.id,
+            "follower_id": request.user.pk,
+            "followee_id": followee.pk,
+            "created_at": follow.created_at.isoformat(),
+        }, status=201)
+    
+    if request.method == "DELETE":
+        # Delete follow relationship
+        try:
+            follow = Follow.objects.get(follower=request.user, followee=followee)
+            follow.delete()
+            return JsonResponse({"detail": "Unfollowed successfully."}, status=200)
+        except Follow.DoesNotExist:
+            return JsonResponse({"detail": "You are not following this user."}, status=400)
+    
+    return JsonResponse({"detail": "Method not allowed."}, status=405)
+
+
+@require_GET
+def user_followers(request: HttpRequest, user_id: int) -> JsonResponse:
+    """GET: List all followers of a user"""
+    try:
+        user = User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({"detail": "User not found."}, status=404)
+    
+    followers = Follow.objects.filter(followee=user).select_related("follower")
+    
+    return JsonResponse({
+        "user_id": user_id,
+        "follower_count": followers.count(),
+        "followers": [
+            {
+                "id": f.follower.pk,
+                "username": f.follower.username,
+                "followed_at": f.created_at.isoformat(),
+            }
+            for f in followers
+        ]
+    }, status=200)
+
+
+@require_GET
+def user_following(request: HttpRequest, user_id: int) -> JsonResponse:
+    """GET: List all users that this user is following"""
+    try:
+        user = User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({"detail": "User not found."}, status=404)
+    
+    following = Follow.objects.filter(follower=user).select_related("followee")
+    
+    return JsonResponse({
+        "user_id": user_id,
+        "following_count": following.count(),
+        "following": [
+            {
+                "id": f.followee.pk,
+                "username": f.followee.username,
+                "followed_at": f.created_at.isoformat(),
+            }
+            for f in following
+        ]
+    }, status=200)
+
+
+@login_required
+@require_GET
+def follower_stats(request: HttpRequest) -> JsonResponse:
+    """GET: Get follower stats for the current user"""
+    user = request.user
+    
+    follower_count = Follow.objects.filter(followee=user).count()
+    following_count = Follow.objects.filter(follower=user).count()
+    
+    return JsonResponse({
+        "follower_count": follower_count,
+        "following_count": following_count,
+    }, status=200)
+
+
+@login_required
+@require_POST
+def like_question(request: HttpRequest, question_id: int) -> JsonResponse:
+    """POST: Like/unlike a question (toggle)"""
+    try:
+        question = Question.objects.get(pk=question_id)
+    except Question.DoesNotExist:
+        return JsonResponse({"detail": "Question not found."}, status=404)
+    
+    # Toggle like
+    like, created = QuestionLike.objects.get_or_create(
+        user=request.user,
+        question=question
+    )
+    
+    if not created:
+        # Unlike
+        like.delete()
+        return JsonResponse({
+            "liked": False,
+            "like_count": QuestionLike.objects.filter(question=question).count()
+        }, status=200)
+    
+    # Like
+    return JsonResponse({
+        "liked": True,
+        "like_count": QuestionLike.objects.filter(question=question).count()
+    }, status=201)
+
+
+@login_required
+@require_POST
+def like_answer(request: HttpRequest, question_id: int) -> JsonResponse:
+    """POST: Like/unlike an answer (toggle) - accessed via question ID"""
+    try:
+        question = Question.objects.get(pk=question_id)
+    except Question.DoesNotExist:
+        return JsonResponse({"detail": "Question not found."}, status=404)
+    
+    # Check if answer exists
+    if not hasattr(question, "answer"):
+        return JsonResponse({"detail": "This question has not been answered yet."}, status=404)
+    
+    answer = question.answer
+    
+    # Toggle like
+    like, created = AnswerLike.objects.get_or_create(
+        user=request.user,
+        answer=answer
+    )
+    
+    if not created:
+        # Unlike
+        like.delete()
+        return JsonResponse({
+            "liked": False,
+            "like_count": AnswerLike.objects.filter(answer=answer).count()
+        }, status=200)
+    
+    # Like
+    return JsonResponse({
+        "liked": True,
+        "like_count": AnswerLike.objects.filter(answer=answer).count()
+    }, status=201)
+
+@login_required
+@require_POST
+def place_bid(request: HttpRequest, item_id: int) -> JsonResponse:
+    """POST /api/items/<id>/bid/ -> Place a bid on an item."""
+    try:
+        item = Item.objects.get(pk=item_id)
+    except Item.DoesNotExist:
+        return JsonResponse({"detail": "Item not found."}, status=404)
+
+    if item.ends_at <= timezone.now():
+        return JsonResponse({"detail": "Auction has ended."}, status=400)
+
+    try:
+        data = json.loads(request.body)
+        amount_str = str(data.get("amount", "")).strip()
+        amount = Decimal(amount_str)
+    except (json.JSONDecodeError, ValueError, InvalidOperation):
+        return JsonResponse({"errors": {"amount": "Invalid amount."}}, status=400)
+
+    bid = Bid(item=item, bidder=request.user, amount=amount)
+
+    try:
+        bid.clean()  # Run model validation (checks > highest bid, etc)
+        bid.save()
+    except ValidationError as exc:
+        # Extract message from validation error
+        msg = "Invalid bid."
+        if hasattr(exc, 'error_dict'):
+             # If it's a dict of errors, grab the first one or specific field
+            errors = exc.message_dict
+            if 'amount' in errors:
+                msg = errors['amount'][0]
+            elif '__all__' in errors:
+                msg = errors['__all__'][0]
+        elif hasattr(exc, "message"):
+            msg = exc.message
+        elif hasattr(exc, "messages"):
+            msg = exc.messages[0]
+        
+        return JsonResponse({"errors": {"amount": msg}}, status=400)
+
+    return JsonResponse(
+        {
+            "id": bid.id,
+            "bidder": bid.bidder.username,
+            "amount": str(bid.amount),
+            "created_at": bid.created_at.isoformat(),
+        },
+        status=201,
     )

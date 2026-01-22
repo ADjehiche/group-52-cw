@@ -145,6 +145,7 @@ class ItemImage(models.Model):
         return f"Image {self.order} for {self.item.title}"
 
 
+
 class Bid(models.Model):
     item = models.ForeignKey(
         Item,
@@ -194,3 +195,94 @@ class Bid(models.Model):
 
     def __str__(self) -> str:
         return f"£{self.amount} on item {self.item_id}"
+
+
+class Follow(models.Model):
+    """User follower relationship model."""
+    follower = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="following",
+        help_text="The user who is following"
+    )
+    followee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="followers",
+        help_text="The user being followed"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['follower', 'followee'],
+                name='unique_follow'
+            ),
+        ]
+        ordering = ['-created_at']
+
+    def clean(self) -> None:
+        super().clean()
+        
+        # Prevent users from following themselves
+        if self.follower_id == self.followee_id:
+            raise ValidationError("Users cannot follow themselves.")
+
+    def __str__(self) -> str:
+        return f"{self.follower.username} follows {self.followee.username}"
+
+
+class QuestionLike(models.Model):
+    """Like model for questions."""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="question_likes"
+    )
+    question = models.ForeignKey(
+        Question,
+        on_delete=models.CASCADE,
+        related_name="likes"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'question'],
+                name='unique_question_like'
+            ),
+        ]
+        ordering = ['-created_at']
+
+    def __str__(self) -> str:
+        return f"{self.user.username} likes question {self.question.id}"
+
+
+class AnswerLike(models.Model):
+    """Like model for answers."""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="answer_likes"
+    )
+    answer = models.ForeignKey(
+        Answer,
+        on_delete=models.CASCADE,
+        related_name="likes"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'answer'],
+                name='unique_answer_like'
+            ),
+        ]
+        ordering = ['-created_at']
+
+    def __str__(self) -> str:
+        return f"{self.user.username} likes answer {self.answer.id}"
+

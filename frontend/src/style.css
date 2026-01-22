@@ -1,1 +1,54 @@
 @import "tailwindcss";
+
+/* Cbay Light Theme Design System */
+:root {
+  /* Background colors */
+  --bg-primary: #faf8f5;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-hover: #fff5f0;
+  
+  /* Text colors */
+  --text-primary: #2d2d2d;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  
+  /* Accent colors - warm palette avoiding blue */
+  --accent-coral: #ff6b6b;
+  --accent-coral-hover: #ff5252;
+  --accent-amber: #ffa94d;
+  --accent-amber-hover: #ff9633;
+  --accent-sage: #95b8a0;
+  --accent-sage-hover: #7fa88f;
+  --accent-peach: #ffcba4;
+  
+  /* Borders and shadows */
+  --border-light: #e8e4df;
+  --border-medium: #d4cec5;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.12);
+  
+  /* Gradients */
+  --gradient-warm: linear-gradient(135deg, var(--accent-peach) 0%, var(--accent-amber) 100%);
+  --gradient-bg: linear-gradient(180deg, #faf8f5 0%, #f5f1ec 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  color: var(--text-primary);
+  background: var(--gradient-bg);
+  min-height: 100vh;
+}
+
+/* Smooth transitions */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
