@@ -7,7 +7,6 @@ This module defines all database models for the auction platform:
 - Bid: User bids on auction items with validation
 - Question/Answer: Q&A system for items
 - Follow: Social following between users
-- QuestionLike/AnswerLike: Engagement tracking for Q&A
 
 All models include comprehensive validation and business rule enforcement.
 """
@@ -94,7 +93,6 @@ class Question(models.Model):
     
     Related managers:
         answer: The seller's answer to this question (OneToOne)
-        likes: Users who liked this question
     """
     item = models.ForeignKey('Item', on_delete=models.CASCADE, related_name='questions')
     content: str = models.TextField()
@@ -122,7 +120,7 @@ class Answer(models.Model):
         created_at: Timestamp when answer was posted
     
     Related managers:
-        likes: Users who liked this answer
+        None
     """
     question: Question = models.OneToOneField(Question, on_delete=models.CASCADE, related_name='answer')
     content: str = models.TextField()
@@ -366,82 +364,3 @@ class Follow(models.Model):
 
     def __str__(self) -> str:
         return f"{self.follower.username} follows {self.followee.username}"
-
-
-class QuestionLike(models.Model):
-    """Like/upvote for a user question.
-    
-    Tracks which users have liked specific questions.
-    Users can only like each question once (unique constraint).
-    
-    Attributes:
-        user: User who liked the question
-        question: Question that was liked
-        created_at: Timestamp when like was created
-    
-    Constraints:
-        - unique_question_like: A user can only like each question once
-    """
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="question_likes"
-    )
-    question = models.ForeignKey(
-        Question,
-        on_delete=models.CASCADE,
-        related_name="likes"
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'question'],
-                name='unique_question_like'
-            ),
-        ]
-        ordering = ['-created_at']
-
-    def __str__(self) -> str:
-        return f"{self.user.username} likes question {self.question.id}"
-
-
-class AnswerLike(models.Model):
-    """Like/upvote for a seller answer.
-    
-    Tracks which users have liked specific answers.
-    Users can only like each answer once (unique constraint).
-    
-    Attributes:
-        user: User who liked the answer
-        answer: Answer that was liked
-        created_at: Timestamp when like was created
-    
-    Constraints:
-        - unique_answer_like: A user can only like each answer once
-    """
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="answer_likes"
-    )
-    answer = models.ForeignKey(
-        Answer,
-        on_delete=models.CASCADE,
-        related_name="likes"
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'answer'],
-                name='unique_answer_like'
-            ),
-        ]
-        ordering = ['-created_at']
-
-    def __str__(self) -> str:
-        return f"{self.user.username} likes answer {self.answer.id}"
-

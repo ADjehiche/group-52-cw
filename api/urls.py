@@ -8,8 +8,6 @@ from .views import (
     item_detail,
     item_questions_list_or_create,
     items_collection,
-    like_answer,
-    like_question,
     main_spa,
     place_bid,
     profile_api,
@@ -25,8 +23,7 @@ urlpatterns = [
     path("api/items/<int:item_id>/questions/", item_questions_list_or_create, name="item_questions"),
     path("api/items/<int:item_id>/bid/", place_bid, name="place_bid"),
     path("api/questions/<int:question_id>/answer/", question_answer, name="question_answer"),
-    path("api/questions/<int:question_id>/like/", like_question, name="like_question"),
-    path("api/questions/<int:question_id>/answer/like/", like_answer, name="like_answer"),
+
     path("api/users/<int:user_id>/follow/", follow_user, name="follow_user"),
     path("api/users/<int:user_id>/followers/", user_followers, name="user_followers"),
     path("api/users/<int:user_id>/following/", user_following, name="user_following"),

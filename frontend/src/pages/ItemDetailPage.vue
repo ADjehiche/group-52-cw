@@ -172,12 +172,16 @@
           </div>
           <p class="qa-content">{{ q.content }}</p>
           
+          
+          
           <div v-if="q.answer" class="qa-answer">
             <div class="answer-header">
               <strong>Seller Answer</strong>
               <span class="date">{{ formatDate(q.answer.created_at) }}</span>
             </div>
             <p>{{ q.answer.content }}</p>
+            
+            
           </div>
           
            <div v-else-if="isOwner" class="qa-reply mt-3">
@@ -248,6 +252,8 @@ export default defineComponent({
       
       // Following
       followLoading: false,
+      
+      
     };
   },
   async created() {
@@ -468,6 +474,7 @@ export default defineComponent({
         this.error = err.detail || "Failed to delete item.";
       }
     },
+
   },
 });
 </script>
@@ -825,4 +832,9 @@ export default defineComponent({
   padding: 0.3rem 0.8rem;
 }
 </style>
+
+
+
+
+
 

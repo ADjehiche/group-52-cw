@@ -1,65 +1,85 @@
-# Template for ECS639U Group Coursework
+# CBay - Online Auction Platform
 
-This template should be used as the starting point for your group coursework in the module ECS639U Web Programming (at Queen Mary University of London). Use Git (github.qmul.ac.uk) to collaborate on the coursework with your group members. Module leader: Paulo Oliva <[p.oliva@qmul.ac.uk](mailto:p.oliva@qmul.ac.uk)>
+A full-featured auction platform built with Django and Vue.js, allowing users to list items, place bids, ask questions, and follow sellers.
 
-## Local development
+## 🎓 Team Members
 
-To run this project in your development machine, follow these steps:
+**Group 52**
 
-1. Create and activate a conda environment
+| Name | Assigned Tasks | Actual Contributions |
+|------|---------------|---------------------|
+| Acil | Assigned to implement Django Models for Questions and Answers, he was in charge of all cron jobs and notifications as well as frontend styling. Also responsible for deployment and all devops. | Completed all assigned tasks |
+| Yasir | Assigned to implement user profile page and Pinia global store management | Implemented profile page with image upload functionality, built Pinia auth store with state management, and integrated authentication flow throughout the application |
+| Rafi | Assigned to implement items listing, item details page, and search functionality | Built all item-related features including item creation with multi-image upload, item detail view, bidding interface, and advanced search with filtering and sorting |
 
-2. Download this repo as a zip and add the files to your own private repo.
+## Deployment
 
-3. Install Pyhton dependencies (main folder):
+**Application URL:** `https://group-52-cw-group-52-cw.apps.a.comp-teach.qmul.ac.uk/`
 
-    ```console
-    $ pip install -r requirements.txt
-    ```
+## Admin Credentials
 
-4. Create a development database:
+- **Username:** `cbayboss`
+- **Password:** `cbay123`
 
-    ```console
-    $ python manage.py migrate
-    ```
 
-5. Install JavaScript dependencies (from 'frontend' folder):
+### 1. Sarah Chen
+- **Username:** `sarahchen`
+- **Password:** `AuctionBid2026!`
 
-    ```console
-    $ npm install
-    ```
+### 2. Marcus Rodriguez
+- **Username:** `mrodriguez`
+- **Password:** `SecureBid2026!`
 
-6. If everything is alright, you should be able to start the Django development server from the main folder:
+### 3. Emily Watson
+- **Username:** `emilywatson`
+- **Password:** `Vintage2026Finds!`
 
-    ```console
-    $ python manage.py runserver
-    ```
+### 4. James Okonkwo
+- **Username:** `jamesokonkwo`
+- **Password:** `BidMaster2026!`
 
-7. and the Vue server from the 'frontend' sub-folder:
+### 5. Priya Sharma
+- **Username:** `priyasharma`
+- **Password:** `ArtAuction2026!`
 
-    ```console
-    $ npm run dev
-    ```
+## Advanced Features (Beyond Requirements)
 
-8. Open your browser and go to http://localhost:5173, you will be greeted with a template page.
+This project goes significantly beyond the basic requirements with several advanced features:
 
-## OpenShift deployment
+### 1. **Social Following System**
+- Users can follow sellers they're interested in
+- Real-time follow/unfollow functionality via API
+- Follower and following counts displayed on profiles
+- Follow status shown on item detail pages
 
-Once your project is ready to be deployed you will need to 'build' the Vue app and place it in Django's static folder.
+### 2. **Automated Email Notifications**
+- **Auction Winners:** Automatic emails sent when auctions end with winning bid details
+- **Sellers:** Notifications when items sell or auctions end without bids
+- **Follower Updates:** Users receive emails when sellers they follow list new items
+- Configured with Gmail SMTP for production use
 
-1. The build command in package.json and the vite.config.ts files have already been modified so that when running 'npm run build' (on Mac and Linux) the generated JavaScript and CSS files will be placed in the mainapp static folder, and the index.html file will be placed in the templates folder:
+### 3. **Cron Job Management Commands**
+- `close_auctions`: Processes ended auctions, determines winners, sends emails
+- `notify_followers`: Sends notifications to followers when new items are listed
+- Both commands are production-ready for scheduled execution (hourly recommended)
+- Comprehensive logging and error handling
 
-    ```console
-    $ npm run build
-    ```
+### 4. **Full Internationalization (i18n)**
+- Complete translation support built into the frontend
+- **English and Spanish** translations provided
+- All UI text, error messages, and confirmations are translatable
+- Language switcher in footer for easy switching
 
-    If using Windows run
+### 5. **S3-Compatible Image Storage**
+- Production deployment uses Amazon S3 for all image uploads
+- Profile images and item images stored in cloud storage
+- Automatic file organisation by upload type (`profile_images/`, `items/`)
+- Local filesystem fallback for development
+- Configured via `django-storages` and `boto3`
 
-    ```console
-    $ npm run build-windows
-    ```
-
-2. You should then follow the instruction on QM+ on how to deploy your app on EECS's OpenShift live server.
-
-## License
-
-This code is dedicated to the public domain to the maximum extent permitted by applicable law, pursuant to [CC0](http://creativecommons.org/publicdomain/zero/1.0/).
+### 6. **Advanced Item Management**
+- **Multi-image upload:** Up to 8 images per item with drag & drop
+- **Image gallery:** Thumbnail navigation on item detail pages
+- **"My Listings" filter:** Users can view only their own items
+- **Delete functionality:** Item owners can delete their listings
+- Ordered image display with user-controlled sequence

@@ -131,3 +131,6 @@ export async function unfollowUser(userId: number): Promise<void> {
 export async function deleteItem(itemId: number): Promise<void> {
   await apiFetch(`/api/items/${itemId}/`, { method: "DELETE" });
 }
+
+
+

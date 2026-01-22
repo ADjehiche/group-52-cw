@@ -46,7 +46,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods, require_POST, require_GET
 from django.contrib.auth import get_user_model
 
-from .models import Answer, AnswerLike, Bid, Follow, Item, ItemImage, Question, QuestionLike
+from .models import Answer, Bid, Follow, Item, ItemImage, Question
 from django.db import transaction
 from django.db.models import Case, Count, IntegerField, Q, When
 
@@ -884,99 +884,6 @@ def follower_stats(request: HttpRequest) -> JsonResponse:
         "following_count": following_count,
     }, status=200)
 
-
-@login_required
-@require_POST
-def like_question(request: HttpRequest, question_id: int) -> JsonResponse:
-    """Like or unlike a question (toggle).
-    
-    POST: Toggle like status for a question
-    
-    Args:
-        request: HTTP request object
-        question_id: ID of question to like/unlike
-    
-    Returns:
-        JsonResponse: {"liked": bool, "like_count": int}
-        
-    Raises:
-        404: If question not found
-    """
-    """POST: Like/unlike a question (toggle)"""
-    try:
-        question = Question.objects.get(pk=question_id)
-    except Question.DoesNotExist:
-        return JsonResponse({"detail": "Question not found."}, status=404)
-    
-    # Toggle like
-    like, created = QuestionLike.objects.get_or_create(
-        user=request.user,
-        question=question
-    )
-    
-    if not created:
-        # Unlike
-        like.delete()
-        return JsonResponse({
-            "liked": False,
-            "like_count": QuestionLike.objects.filter(question=question).count()
-        }, status=200)
-    
-    # Like
-    return JsonResponse({
-        "liked": True,
-        "like_count": QuestionLike.objects.filter(question=question).count()
-    }, status=201)
-
-
-@login_required
-@require_POST
-def like_answer(request: HttpRequest, question_id: int) -> JsonResponse:
-    """Like or unlike an answer (toggle).
-    
-    POST: Toggle like status for an answer (accessed via question ID)
-    
-    Args:
-        request: HTTP request object
-        question_id: ID of the question whose answer to like/unlike
-    
-    Returns:
-        JsonResponse: {"liked": bool, "like_count": int}
-        
-    Raises:
-        404: If question or answer not found
-    """
-    """POST: Like/unlike an answer (toggle) - accessed via question ID"""
-    try:
-        question = Question.objects.get(pk=question_id)
-    except Question.DoesNotExist:
-        return JsonResponse({"detail": "Question not found."}, status=404)
-    
-    # Check if answer exists
-    if not hasattr(question, "answer"):
-        return JsonResponse({"detail": "This question has not been answered yet."}, status=404)
-    
-    answer = question.answer
-    
-    # Toggle like
-    like, created = AnswerLike.objects.get_or_create(
-        user=request.user,
-        answer=answer
-    )
-    
-    if not created:
-        # Unlike
-        like.delete()
-        return JsonResponse({
-            "liked": False,
-            "like_count": AnswerLike.objects.filter(answer=answer).count()
-        }, status=200)
-    
-    # Like
-    return JsonResponse({
-        "liked": True,
-        "like_count": AnswerLike.objects.filter(answer=answer).count()
-    }, status=201)
 
 @login_required
 @require_POST

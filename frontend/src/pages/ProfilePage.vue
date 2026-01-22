@@ -92,6 +92,21 @@
             </div>
           </div>
 
+          <!-- Follower Stats -->
+          <div class="field">
+            <label class="auth-label">Social Stats</label>
+            <div class="stats-row">
+              <div class="stat-item">
+                <span class="stat-number">{{ followerStats.follower_count }}</span>
+                <span class="stat-label">Followers</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number">{{ followerStats.following_count }}</span>
+                <span class="stat-label">Following</span>
+              </div>
+            </div>
+          </div>
+
           <button
             class="btn-primary"
             type="button"
@@ -139,6 +154,11 @@ export default defineComponent({
 
       imageFile: null as File | null,
       imagePreviewUrl: "" as string, // object URL
+      
+      followerStats: {
+        follower_count: 0,
+        following_count: 0,
+      },
     };
   },
 
@@ -151,6 +171,7 @@ export default defineComponent({
 
   async created() {
     await this.loadProfile();
+    await this.loadFollowerStats();
   },
 
   beforeUnmount() {
@@ -183,6 +204,22 @@ export default defineComponent({
         this.globalError = "Network error while loading profile.";
       } finally {
         this.loading = false;
+      }
+    },
+
+    async loadFollowerStats() {
+      try {
+        const resp = await apiFetch("/api/follower-stats/");
+        if (resp.ok) {
+          const data = await resp.json();
+          this.followerStats = {
+            follower_count: data.follower_count || 0,
+            following_count: data.following_count || 0,
+          };
+        }
+      } catch (e) {
+        // Silently fail - stats are not critical
+        console.error("Failed to load follower stats", e);
       }
     },
 
@@ -396,6 +433,46 @@ export default defineComponent({
   margin-top: 1rem;
   display: grid;
   gap: 0.5rem;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-medium);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.stat-item:hover {
+  border-color: var(--accent-coral);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--accent-coral);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
 }
 
 .auth-label {
