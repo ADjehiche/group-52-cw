@@ -96,11 +96,12 @@ class Item(models.Model):
     )
     ends_at = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
+    winner_notified = models.BooleanField(default=False)
 
     class Meta:
         constraints = [
             models.CheckConstraint(
-                condition=Q(starting_price__gte=0),
+                check=Q(starting_price__gte=0),
                 name="item_starting_price_gte_0",
             ),
         ]
@@ -167,7 +168,7 @@ class Bid(models.Model):
     class Meta:
         constraints = [
             models.CheckConstraint(
-                condition=Q(amount__gt=0),
+                check=Q(amount__gt=0),
                 name="bid_amount_gt_0",
             ),
         ]

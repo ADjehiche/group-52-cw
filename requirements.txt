@@ -1,7 +1,7 @@
 asgiref==3.9.1
 boto3==1.35.93
 django-storages==1.14.4
-Django==5.2.9
+Django==4.2.18
 gunicorn==23.0.0
 packaging==25.0
 Pillow==11.1.0

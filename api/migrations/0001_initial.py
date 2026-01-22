@@ -157,11 +157,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='item',
-            constraint=models.CheckConstraint(condition=models.Q(('starting_price__gte', 0)), name='item_starting_price_gte_0'),
+            constraint=models.CheckConstraint(check=models.Q(('starting_price__gte', 0)), name='item_starting_price_gte_0'),
         ),
         migrations.AddConstraint(
             model_name='bid',
-            constraint=models.CheckConstraint(condition=models.Q(('amount__gt', 0)), name='bid_amount_gt_0'),
+            constraint=models.CheckConstraint(check=models.Q(('amount__gt', 0)), name='bid_amount_gt_0'),
         ),
         migrations.AddConstraint(
             model_name='questionlike',
