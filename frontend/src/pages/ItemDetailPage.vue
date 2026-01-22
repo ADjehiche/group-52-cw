@@ -92,6 +92,16 @@
           <template v-if="!isAuthenticated">
             <a class="btn btn-primary w-100" href="/accounts/login/">{{ $t('pages.itemDetail.loginToBid') }}</a>
           </template>
+          <template v-else-if="isOwner">
+            <div class="owner-controls">
+              <div class="alert alert-info">
+                You cannot bid on your own item.
+              </div>
+              <button class="btn btn-danger w-100 mt-2" @click="deleteListing">
+                Delete Listing
+              </button>
+            </div>
+          </template>
           <template v-else>
             <div v-if="remainingSeconds <= 0" class="alert alert-warning">
               {{ $t('pages.itemDetail.ended') }}
@@ -202,7 +212,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { fetchItemDetail, ItemDetail, Question, placeBid, fetchItemQuestions, postQuestion, postAnswer, followUser, unfollowUser } from "../api";
+import { fetchItemDetail, ItemDetail, Question, placeBid, fetchItemQuestions, postQuestion, postAnswer, followUser, unfollowUser, deleteItem } from "../api";
 import { fetchAuthStatus } from "../auth";
 
 export default defineComponent({
@@ -447,6 +457,15 @@ export default defineComponent({
         console.error("Failed to toggle follow", e);
       } finally {
         this.followLoading = false;
+      }
+    },
+    async deleteListing() {
+      if (!this.item || !confirm("Are you sure you want to delete this listing? This action cannot be undone.")) return;
+      try {
+        await deleteItem(this.item.id);
+        (this as any).$router.push({ name: "Main Page" });
+      } catch (err: any) {
+        this.error = err.detail || "Failed to delete item.";
       }
     },
   },
