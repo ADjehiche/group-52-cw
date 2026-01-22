@@ -174,6 +174,11 @@ export default defineComponent({
     await this.loadFollowerStats();
   },
 
+  async activated() {
+    // Reload follower stats when navigating back to this page
+    await this.loadFollowerStats();
+  },
+
   beforeUnmount() {
     if (this.imagePreviewUrl) URL.revokeObjectURL(this.imagePreviewUrl);
   },
@@ -209,7 +214,7 @@ export default defineComponent({
 
     async loadFollowerStats() {
       try {
-        const resp = await apiFetch("/api/follower-stats/");
+        const resp = await apiFetch("/api/profile/follower-stats/");
         if (resp.ok) {
           const data = await resp.json();
           this.followerStats = {
