@@ -282,7 +282,7 @@ def item_detail(request: HttpRequest, item_id: int) -> JsonResponse:
         if request.user != item.owner:
             return JsonResponse({"detail": "Only the owner can delete this item."}, status=403)
         item.delete()
-        return JsonResponse({}, status=204)
+        return HttpResponse(status=204)
     
     highest_bid = item.bids.order_by("-amount").first()
     highest_bid_data = None

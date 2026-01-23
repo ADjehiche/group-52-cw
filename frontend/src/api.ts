@@ -65,7 +65,16 @@ async function handleResponse(response: Response) {
     }
     throw new Error(text || `Request failed (${response.status})`);
   }
-  return response.json();
+  if (response.status === 204) {
+    return null;
+  }
+
+  const text = await response.text();
+  if (!text) {
+    return null;
+  }
+
+  return JSON.parse(text);
 }
 
 export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}): Promise<T> {

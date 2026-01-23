@@ -31,7 +31,7 @@ SECRET_KEY = os.getenv(
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -211,8 +211,10 @@ if DEBUG:
     SESSION_COOKIE_SAMESITE = "Lax"
     CSRF_COOKIE_SAMESITE = "Lax"
 
-# Production CSRF settings (always trusted)
+# CSRF trusted origins
 CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
     "https://group-52-cw-group-52-cw.apps.a.comp-teach.qmul.ac.uk",
 ]
 
